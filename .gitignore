@@ -14,8 +14,6 @@ __pycache__/
 node_modules/
 *.log
 .DS_Store
-Bisoprolol_icsr_sample_1068rows.xlsx
-Bisoprolol_icsr_sample_1068rows.csv
 DATA_USAGE_NOTICE.pdf
 GenAR - AI Engineering Challenge.pdf
 PADER-FDA-Y0AHP_PADER_Full_sample_data_B-1_CLIENT_DEV_01_FDA_v1_20260810.pdf

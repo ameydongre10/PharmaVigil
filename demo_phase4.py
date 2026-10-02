@@ -25,6 +25,8 @@ def run_demo():
 
     # 1. Load Dataset & Deterministic Analysis
     file_path = "Bisoprolol_icsr_sample_1068rows.xlsx"
+    if not os.path.exists(file_path):
+        file_path = "sample_data/sample_icsr_dataset.xlsx"
     print(f"\n[1] Loading dataset: {file_path}")
     df = load_and_normalize_data(file_path)
     engine = AnalysisEngine(df)

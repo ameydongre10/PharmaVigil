@@ -1,0 +1,1069 @@
+safetyreportid,receivedate,serious,fulfillexpeditecriteria,patient_patientonsetage,patient_patientsex,occurcountry,primarysource_reportercountry,patient_reaction_reactionmeddrapt,patient_reaction_reactionoutcome
+US-BISOPROLOL-00001,20241227,1,1,45,female,US,US,Acute kidney injury,fatal
+US-BISOPROLOL-00002,20241227,1,1,66,male,GB,GB,Acute kidney injury,fatal
+US-BISOPROLOL-00003,20241227,1,1,67,female,DE,DE,Acute kidney injury,fatal
+US-BISOPROLOL-00004,20241228,1,1,68,male,FR,FR,Acute kidney injury,fatal
+US-BISOPROLOL-00005,20241228,1,1,69,female,IT,IT,Acute kidney injury,fatal
+US-BISOPROLOL-00006,20241228,1,1,70,male,JP,JP,Acute kidney injury,recovering
+US-BISOPROLOL-00007,20241229,1,1,71,female,CA,CA,Acute kidney injury,recovering
+US-BISOPROLOL-00008,20241229,1,1,72,male,US,US,Acute kidney injury,recovering
+US-BISOPROLOL-00009,20241229,1,1,73,female,GB,GB,Acute kidney injury,recovering
+US-BISOPROLOL-00010,20241230,1,1,74,male,DE,DE,Acute kidney injury,recovering
+US-BISOPROLOL-00011,20241230,1,1,55,female,FR,FR,Acute kidney injury,recovering
+US-BISOPROLOL-00012,20241230,1,1,76,male,IT,IT,Acute kidney injury,recovering
+US-BISOPROLOL-00013,20241231,1,1,77,female,JP,JP,Acute kidney injury,recovering
+US-BISOPROLOL-00014,20241231,1,1,78,male,CA,CA,Acute kidney injury,recovering
+US-BISOPROLOL-00015,20241231,1,1,79,female,US,US,Acute kidney injury,recovering
+US-BISOPROLOL-00016,20250101,1,1,80,male,GB,GB,Acute kidney injury,recovering
+US-BISOPROLOL-00017,20250101,1,1,81,female,DE,DE,Acute kidney injury,recovering
+US-BISOPROLOL-00018,20250102,1,1,82,male,FR,FR,Acute kidney injury,recovering
+US-BISOPROLOL-00019,20250102,1,1,83,female,IT,IT,Acute kidney injury,recovering
+US-BISOPROLOL-00020,20250102,1,1,84,male,JP,JP,Acute kidney injury,recovering
+US-BISOPROLOL-00021,20250103,1,1,50,female,CA,CA,Acute kidney injury,recovering
+US-BISOPROLOL-00022,20250103,1,1,86,male,US,US,Acute kidney injury,recovering
+US-BISOPROLOL-00023,20250103,1,1,87,female,GB,GB,Drug ineffective,recovering
+US-BISOPROLOL-00024,20250104,1,1,88,male,DE,DE,Drug ineffective,recovering
+US-BISOPROLOL-00025,20250104,1,1,89,female,FR,FR,Drug ineffective,recovering
+US-BISOPROLOL-00026,20250104,1,1,65,male,IT,IT,Drug ineffective,recovering
+US-BISOPROLOL-00027,20250105,1,1,66,female,JP,JP,Drug ineffective,recovering
+US-BISOPROLOL-00028,20250105,1,1,67,male,CA,CA,Drug ineffective,recovering
+US-BISOPROLOL-00029,20250105,1,1,68,female,US,US,Drug ineffective,recovering
+US-BISOPROLOL-00030,20250106,1,1,69,male,GB,GB,Drug ineffective,recovering
+US-BISOPROLOL-00031,20250106,1,1,45,female,DE,DE,Drug ineffective,recovering
+US-BISOPROLOL-00032,20250107,1,1,71,male,FR,FR,Drug ineffective,recovering
+US-BISOPROLOL-00033,20250107,1,1,72,female,IT,IT,Drug ineffective,recovering
+US-BISOPROLOL-00034,20250107,1,1,73,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00035,20250108,1,1,74,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00036,20250108,1,1,75,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00037,20250108,1,1,76,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00038,20250109,1,1,77,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00039,20250109,1,1,78,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00040,20250109,1,1,79,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00041,20250110,1,1,55,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00042,20250110,1,1,81,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00043,20250110,1,1,82,female,US,US,Syncope,recovering
+US-BISOPROLOL-00044,20250111,1,1,83,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00045,20250111,1,1,84,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00046,20250112,1,1,85,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00047,20250112,1,1,86,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00048,20250112,1,1,87,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00049,20250113,1,1,88,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00050,20250113,1,1,89,male,US,US,Rash,recovering
+US-BISOPROLOL-00051,20250113,1,1,50,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00052,20250114,1,1,66,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00053,20250114,1,1,67,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00054,20250114,1,1,68,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00055,20250115,1,1,69,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00056,20250115,1,1,70,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00057,20250115,1,1,71,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00058,20250116,1,1,72,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00059,20250116,1,1,73,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00060,20250116,1,1,74,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00061,20250117,1,1,45,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00062,20250117,1,1,76,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00063,20250118,1,1,77,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00064,20250118,1,1,78,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00065,20250118,1,1,79,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00066,20250119,1,1,80,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00067,20250119,1,1,81,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00068,20250119,1,1,82,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00069,20250120,1,1,83,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00070,20250120,1,1,84,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00071,20250120,1,1,55,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00072,20250121,1,1,86,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00073,20250121,1,1,87,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00074,20250121,1,1,88,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00075,20250122,1,1,89,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00076,20250122,1,1,65,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00077,20250123,1,1,66,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00078,20250123,1,1,67,male,US,US,Nausea,recovering
+US-BISOPROLOL-00079,20250123,1,1,68,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00080,20250124,1,1,69,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00081,20250124,1,1,50,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00082,20250124,1,1,71,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00083,20250125,1,1,72,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00084,20250125,1,1,73,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00085,20250125,1,1,74,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00086,20250126,1,1,75,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00087,20250126,1,1,76,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00088,20250126,1,1,77,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00089,20250127,1,1,78,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00090,20250127,1,1,79,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00091,20250128,1,1,45,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00092,20250128,1,1,81,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00093,20250128,1,1,82,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00094,20250129,1,1,83,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00095,20250129,1,1,84,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00096,20250129,1,1,85,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00097,20250130,1,1,86,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00098,20250130,1,1,87,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00099,20250130,1,1,88,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00100,20250131,1,1,89,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00101,20250131,1,1,55,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00102,20250131,1,1,66,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00103,20250201,1,1,67,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00104,20250201,1,1,68,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00105,20250202,1,1,69,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00106,20250202,1,1,70,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00107,20250202,1,1,71,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00108,20250203,1,1,72,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00109,20250203,1,1,73,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00110,20250203,1,1,74,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00111,20250204,1,1,50,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00112,20250204,1,1,76,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00113,20250204,1,1,77,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00114,20250205,1,1,78,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00115,20250205,1,1,79,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00116,20250205,1,1,80,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00117,20250206,1,1,81,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00118,20250206,1,1,82,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00119,20250206,1,1,83,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00120,20250207,1,1,84,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00121,20250207,1,1,45,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00122,20250208,1,1,86,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00123,20250208,1,1,87,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00124,20250208,1,1,88,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00125,20250209,1,1,89,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00126,20250209,1,1,65,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00127,20250209,1,1,66,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00128,20250210,1,1,67,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00129,20250210,1,1,68,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00130,20250210,1,1,69,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00131,20250211,1,1,55,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00132,20250211,1,1,71,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00133,20250211,1,1,72,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00134,20250212,1,1,73,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00135,20250212,1,1,74,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00136,20250213,1,1,75,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00137,20250213,1,1,76,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00138,20250213,1,1,77,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00139,20250214,1,1,78,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00140,20250214,1,1,79,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00141,20250214,1,1,50,female,US,US,Headache,recovering
+US-BISOPROLOL-00142,20250215,1,1,81,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00143,20250215,1,1,82,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00144,20250215,1,1,83,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00145,20250216,1,1,84,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00146,20250216,1,1,85,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00147,20250216,1,1,86,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00148,20250217,1,1,87,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00149,20250217,1,1,88,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00150,20250218,1,1,89,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00151,20250218,1,1,45,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00152,20250218,1,1,66,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00153,20250219,1,1,67,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00154,20250219,1,1,68,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00155,20250219,1,1,69,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00156,20250220,1,1,70,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00157,20250220,1,1,71,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00158,20250220,1,1,72,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00159,20250221,1,1,73,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00160,20250221,1,1,74,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00161,20250221,1,1,55,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00162,20250222,1,1,76,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00163,20250222,1,1,77,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00164,20250222,1,1,78,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00165,20250223,1,1,79,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00166,20250223,1,1,80,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00167,20250224,1,1,81,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00168,20250224,1,1,82,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00169,20250224,1,1,83,female,US,US,Syncope,recovering
+US-BISOPROLOL-00170,20250225,1,1,84,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00171,20250225,1,1,50,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00172,20250225,1,1,86,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00173,20250226,1,1,87,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00174,20250226,1,1,88,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00175,20250226,1,1,89,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00176,20250227,1,1,65,male,US,US,Rash,recovering
+US-BISOPROLOL-00177,20250227,1,1,66,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00178,20250227,1,1,67,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00179,20250228,1,1,68,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00180,20250228,1,1,69,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00181,20250301,1,1,45,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00182,20250301,1,1,71,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00183,20250301,1,1,72,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00184,20250302,1,1,73,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00185,20250302,1,1,74,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00186,20250302,1,1,75,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00187,20250303,1,1,76,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00188,20250303,1,1,77,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00189,20250303,1,1,78,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00190,20250304,1,1,79,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00191,20250304,1,1,55,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00192,20250304,1,1,81,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00193,20250305,1,1,82,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00194,20250305,1,1,83,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00195,20250306,1,1,84,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00196,20250306,1,1,85,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00197,20250306,1,1,86,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00198,20250307,1,1,87,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00199,20250307,1,1,88,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00200,20250307,1,1,89,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00201,20250308,1,1,50,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00202,20250308,1,1,66,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00203,20250308,1,1,67,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00204,20250309,1,1,68,male,US,US,Nausea,recovering
+US-BISOPROLOL-00205,20250309,1,1,69,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00206,20250309,1,1,70,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00207,20250310,1,1,71,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00208,20250310,1,1,72,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00209,20250311,1,1,73,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00210,20250311,1,1,74,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00211,20250311,1,1,45,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00212,20250312,1,1,76,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00213,20250312,1,1,77,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00214,20250312,1,1,78,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00215,20250313,1,1,79,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00216,20250313,1,1,80,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00217,20250313,1,1,81,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00218,20250314,1,1,82,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00219,20250314,1,1,83,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00220,20250314,1,1,84,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00221,20250315,1,1,55,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00222,20250315,1,1,86,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00223,20250315,1,1,87,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00224,20250316,1,1,88,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00225,20250316,1,1,89,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00226,20250317,1,1,65,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00227,20250317,1,1,66,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00228,20250317,1,1,67,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00229,20250318,1,1,68,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00230,20250318,1,1,69,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00231,20250318,1,1,50,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00232,20250319,1,1,71,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00233,20250319,1,1,72,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00234,20250319,1,1,73,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00235,20250320,1,1,74,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00236,20250320,1,1,75,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00237,20250320,1,1,76,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00238,20250321,1,1,77,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00239,20250321,1,1,78,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00240,20250322,1,1,79,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00241,20250322,1,1,45,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00242,20250322,1,1,81,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00243,20250323,1,1,82,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00244,20250323,1,1,83,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00245,20250323,1,1,84,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00246,20250324,1,1,85,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00247,20250324,1,1,86,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00248,20250324,1,1,87,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00249,20250325,1,1,88,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00250,20250325,1,1,89,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00251,20250325,1,1,55,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00252,20250326,1,1,66,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00253,20250326,1,1,67,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00254,20250327,1,1,68,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00255,20250327,1,1,69,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00256,20250327,1,1,70,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00257,20250328,1,1,71,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00258,20250328,1,1,72,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00259,20250328,1,1,73,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00260,20250329,1,1,74,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00261,20250329,1,1,50,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00262,20250329,1,1,76,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00263,20250330,1,1,77,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00264,20250330,1,1,78,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00265,20250330,1,1,79,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00266,20250331,1,1,80,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00267,20250331,1,1,81,female,US,US,Headache,recovering
+US-BISOPROLOL-00268,20250401,1,1,82,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00269,20250401,1,1,83,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00270,20250401,1,1,84,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00271,20250402,1,1,45,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00272,20250402,1,1,86,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00273,20250402,1,1,87,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00274,20250403,1,1,88,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00275,20250403,1,1,89,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00276,20250403,1,1,65,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00277,20250404,1,1,66,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00278,20250404,1,1,67,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00279,20250404,1,1,68,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00280,20250405,1,1,69,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00281,20250405,1,1,55,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00282,20250405,1,1,71,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00283,20250406,1,1,72,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00284,20250406,1,1,73,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00285,20250407,1,1,74,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00286,20250407,1,1,75,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00287,20250407,1,1,76,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00288,20250408,1,1,77,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00289,20250408,1,1,78,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00290,20250408,1,1,79,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00291,20250409,1,1,50,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00292,20250409,1,1,81,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00293,20250409,1,1,82,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00294,20250410,1,1,83,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00295,20250410,1,1,84,female,US,US,Syncope,recovering
+US-BISOPROLOL-00296,20250410,1,1,85,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00297,20250411,1,1,86,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00298,20250411,1,1,87,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00299,20250412,1,1,88,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00300,20250412,1,1,89,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00301,20250412,1,1,45,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00302,20250413,1,1,66,male,US,US,Rash,recovering
+US-BISOPROLOL-00303,20250413,1,1,67,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00304,20250413,1,1,68,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00305,20250414,1,1,69,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00306,20250414,1,1,70,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00307,20250414,1,1,71,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00308,20250415,1,1,72,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00309,20250415,1,1,73,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00310,20250415,1,1,74,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00311,20250416,1,1,55,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00312,20250416,1,1,76,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00313,20250417,1,1,77,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00314,20250417,1,1,78,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00315,20250417,1,1,79,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00316,20250418,1,1,80,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00317,20250418,1,1,81,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00318,20250418,1,1,82,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00319,20250419,1,1,83,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00320,20250419,1,1,84,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00321,20250419,1,1,50,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00322,20250420,1,1,86,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00323,20250420,1,1,87,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00324,20250420,1,1,88,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00325,20250421,1,1,89,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00326,20250421,1,1,65,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00327,20250421,1,1,66,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00328,20250422,1,1,67,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00329,20250422,1,1,68,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00330,20250423,1,1,69,male,US,US,Nausea,recovering
+US-BISOPROLOL-00331,20250423,1,1,45,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00332,20250423,1,1,71,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00333,20250424,1,1,72,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00334,20250424,1,1,73,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00335,20250424,1,1,74,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00336,20250425,1,1,75,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00337,20250425,1,1,76,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00338,20250425,1,1,77,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00339,20250426,1,1,78,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00340,20250426,1,1,79,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00341,20250426,1,1,55,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00342,20250427,1,1,81,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00343,20250427,1,1,82,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00344,20250428,1,1,83,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00345,20250428,1,1,84,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00346,20250428,1,1,85,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00347,20250429,1,1,86,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00348,20250429,1,1,87,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00349,20250429,1,1,88,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00350,20250430,1,1,89,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00351,20250430,1,1,50,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00352,20250430,1,1,66,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00353,20250501,1,1,67,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00354,20250501,1,1,68,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00355,20250501,1,1,69,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00356,20250502,1,1,70,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00357,20250502,1,1,71,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00358,20250503,1,1,72,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00359,20250503,1,1,73,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00360,20250503,1,1,74,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00361,20250504,1,1,45,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00362,20250504,1,1,76,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00363,20250504,1,1,77,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00364,20250505,1,1,78,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00365,20250505,1,1,79,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00366,20250505,1,1,80,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00367,20250506,1,1,81,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00368,20250506,1,1,82,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00369,20250506,1,1,83,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00370,20250507,1,1,84,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00371,20250507,1,1,55,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00372,20250508,1,1,86,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00373,20250508,1,1,87,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00374,20250508,1,1,88,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00375,20250509,1,1,89,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00376,20250509,1,1,65,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00377,20250509,1,1,66,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00378,20250510,1,1,67,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00379,20250510,1,1,68,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00380,20250510,1,1,69,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00381,20250511,1,1,50,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00382,20250511,1,1,71,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00383,20250511,1,1,72,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00384,20250512,1,1,73,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00385,20250512,1,1,74,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00386,20250512,1,1,75,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00387,20250513,1,1,76,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00388,20250513,1,1,77,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00389,20250514,1,1,78,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00390,20250514,1,1,79,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00391,20250514,1,1,45,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00392,20250515,1,1,81,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00393,20250515,1,1,82,female,US,US,Headache,recovering
+US-BISOPROLOL-00394,20250515,1,1,83,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00395,20250516,1,1,84,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00396,20250516,1,1,85,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00397,20250516,1,1,86,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00398,20250517,1,1,87,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00399,20250517,1,1,88,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00400,20250517,1,1,89,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00401,20250518,1,1,55,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00402,20250518,1,1,66,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00403,20250519,1,1,67,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00404,20250519,1,1,68,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00405,20250519,1,1,69,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00406,20250520,1,1,70,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00407,20250520,1,1,71,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00408,20250520,1,1,72,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00409,20250521,1,1,73,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00410,20250521,1,1,74,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00411,20250521,1,1,50,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00412,20250522,1,1,76,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00413,20250522,1,1,77,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00414,20250522,1,1,78,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00415,20250523,1,1,79,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00416,20250523,1,1,80,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00417,20250524,1,1,81,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00418,20250524,1,1,82,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00419,20250524,1,1,83,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00420,20250525,1,1,84,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00421,20250525,1,1,45,female,US,US,Syncope,recovering
+US-BISOPROLOL-00422,20250525,1,1,86,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00423,20250526,1,1,87,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00424,20250526,1,1,88,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00425,20250526,1,1,89,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00426,20250527,1,1,65,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00427,20250527,1,1,66,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00428,20250527,1,1,67,male,US,US,Rash,recovering
+US-BISOPROLOL-00429,20250528,1,1,68,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00430,20250528,1,1,69,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00431,20250529,1,1,55,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00432,20250529,1,1,71,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00433,20250529,1,1,72,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00434,20250530,1,1,73,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00435,20250530,1,1,74,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00436,20250530,1,1,75,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00437,20250531,1,1,76,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00438,20250531,1,1,77,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00439,20250531,1,1,78,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00440,20250601,1,1,79,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00441,20250601,1,1,50,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00442,20250601,1,1,81,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00443,20250602,1,1,82,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00444,20250602,1,1,83,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00445,20250602,1,1,84,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00446,20250603,1,1,85,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00447,20250603,1,1,86,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00448,20250604,1,1,87,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00449,20250604,1,1,88,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00450,20250604,1,1,89,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00451,20250605,1,1,45,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00452,20250605,1,1,66,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00453,20250605,1,1,67,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00454,20250606,1,1,68,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00455,20250606,1,1,69,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00456,20250606,1,1,70,male,US,US,Nausea,recovering
+US-BISOPROLOL-00457,20250607,1,1,71,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00458,20250607,1,1,72,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00459,20250607,1,1,73,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00460,20250608,1,1,74,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00461,20250608,1,1,55,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00462,20250609,1,1,76,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00463,20250609,1,1,77,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00464,20250609,1,1,78,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00465,20250610,1,1,79,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00466,20250610,1,1,80,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00467,20250610,1,1,81,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00468,20250611,1,1,82,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00469,20250611,1,1,83,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00470,20250611,1,1,84,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00471,20250612,1,1,50,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00472,20250612,1,1,86,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00473,20250612,1,1,87,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00474,20250613,1,1,88,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00475,20250613,1,1,89,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00476,20250614,1,1,65,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00477,20250614,1,1,66,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00478,20250614,1,1,67,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00479,20250615,1,1,68,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00480,20250615,1,1,69,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00481,20250615,1,1,45,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00482,20250616,1,1,71,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00483,20250616,1,1,72,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00484,20250616,1,1,73,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00485,20250617,1,1,74,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00486,20250617,1,1,75,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00487,20250617,1,1,76,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00488,20250618,1,1,77,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00489,20250618,1,1,78,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00490,20250618,1,1,79,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00491,20250619,1,1,55,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00492,20250619,1,1,81,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00493,20250620,1,1,82,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00494,20250620,1,1,83,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00495,20250620,1,1,84,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00496,20250621,1,1,85,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00497,20250621,1,1,86,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00498,20250621,1,1,87,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00499,20250622,1,1,88,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00500,20250622,1,1,89,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00501,20250622,1,1,50,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00502,20250623,1,1,66,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00503,20250623,1,1,67,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00504,20250623,1,1,68,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00505,20250624,1,1,69,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00506,20250624,1,1,70,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00507,20250625,1,1,71,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00508,20250625,1,1,72,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00509,20250625,1,1,73,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00510,20250626,1,1,74,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00511,20250626,1,1,45,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00512,20250626,1,1,76,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00513,20250627,1,1,77,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00514,20250627,1,1,78,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00515,20250627,1,1,79,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00516,20250628,1,1,80,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00517,20250628,1,1,81,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00518,20250628,1,1,82,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00519,20250629,1,1,83,female,US,US,Headache,recovering
+US-BISOPROLOL-00520,20250629,1,1,84,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00521,20250630,1,1,55,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00522,20250630,1,1,86,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00523,20250630,1,1,87,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00524,20250701,1,1,88,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00525,20250701,1,1,89,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00526,20250701,1,1,65,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00527,20250702,1,1,66,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00528,20250702,1,1,67,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00529,20250702,1,1,68,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00530,20250703,1,1,69,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00531,20250703,1,1,50,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00532,20250703,1,1,71,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00533,20250704,1,1,72,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00534,20250704,1,1,73,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00535,20250705,1,1,74,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00536,20250705,1,1,75,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00537,20250705,1,1,76,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00538,20250706,1,1,77,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00539,20250706,1,1,78,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00540,20250706,1,1,79,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00541,20250707,1,1,45,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00542,20250707,1,1,81,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00543,20250707,1,1,82,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00544,20250708,1,1,83,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00545,20250708,1,1,84,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00546,20250708,1,1,85,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00547,20250709,1,1,86,female,US,US,Syncope,recovering
+US-BISOPROLOL-00548,20250709,1,1,87,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00549,20250709,1,1,88,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00550,20250710,1,1,89,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00551,20250710,1,1,55,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00552,20250711,1,1,66,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00553,20250711,1,1,67,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00554,20250711,1,1,68,male,US,US,Rash,recovering
+US-BISOPROLOL-00555,20250712,1,1,69,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00556,20250712,1,1,70,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00557,20250712,1,1,71,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00558,20250713,1,1,72,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00559,20250713,1,1,73,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00560,20250713,1,1,74,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00561,20250714,1,1,50,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00562,20250714,1,1,76,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00563,20250714,1,1,77,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00564,20250715,1,1,78,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00565,20250715,1,1,79,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00566,20250716,1,1,80,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00567,20250716,1,1,81,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00568,20250716,1,1,82,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00569,20250717,1,1,83,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00570,20250717,1,1,84,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00571,20250717,1,1,45,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00572,20250718,1,1,86,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00573,20250718,1,1,87,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00574,20250718,1,1,88,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00575,20250719,1,1,89,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00576,20250719,1,1,65,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00577,20250719,1,1,66,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00578,20250720,1,1,67,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00579,20250720,1,1,68,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00580,20250721,1,1,69,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00581,20250721,1,1,55,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00582,20250721,1,1,71,male,US,US,Nausea,recovering
+US-BISOPROLOL-00583,20250722,1,1,72,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00584,20250722,1,1,73,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00585,20250722,1,1,74,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00586,20250723,1,1,75,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00587,20250723,1,1,76,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00588,20250723,1,1,77,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00589,20250724,1,1,78,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00590,20250724,1,1,79,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00591,20250724,1,1,50,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00592,20250725,1,1,81,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00593,20250725,1,1,82,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00594,20250725,1,1,83,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00595,20250726,1,1,84,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00596,20250726,1,1,85,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00597,20250727,1,1,86,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00598,20250727,1,1,87,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00599,20250727,1,1,88,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00600,20250728,1,1,89,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00601,20250728,1,1,45,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00602,20250728,1,1,66,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00603,20250729,1,1,67,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00604,20250729,1,1,68,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00605,20250729,1,1,69,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00606,20250730,1,1,70,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00607,20250730,1,1,71,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00608,20250730,1,1,72,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00609,20250731,1,1,73,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00610,20250731,1,1,74,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00611,20250801,1,1,55,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00612,20250801,1,1,76,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00613,20250801,1,1,77,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00614,20250802,1,1,78,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00615,20250802,1,1,79,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00616,20250802,1,1,80,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00617,20250803,1,1,81,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00618,20250803,1,1,82,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00619,20250803,1,1,83,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00620,20250804,1,1,84,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00621,20250804,1,1,50,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00622,20250804,1,1,86,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00623,20250805,1,1,87,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00624,20250805,1,1,88,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00625,20250806,1,1,89,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00626,20250806,1,1,65,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00627,20250806,1,1,66,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00628,20250807,1,1,67,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00629,20250807,1,1,68,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00630,20250807,1,1,69,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00631,20250808,1,1,45,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00632,20250808,1,1,71,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00633,20250808,1,1,72,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00634,20250809,1,1,73,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00635,20250809,1,1,74,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00636,20250809,1,1,75,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00637,20250810,1,1,76,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00638,20250810,1,1,77,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00639,20250811,1,1,78,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00640,20250811,1,1,79,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00641,20250811,1,1,55,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00642,20250812,1,1,81,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00643,20250812,1,1,82,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00644,20250812,1,1,83,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00645,20250813,1,1,84,female,US,US,Headache,recovering
+US-BISOPROLOL-00646,20250813,1,1,85,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00647,20250813,1,1,86,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00648,20250814,1,1,87,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00649,20250814,1,1,88,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00650,20250814,1,1,89,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00651,20250815,1,1,50,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00652,20250815,1,1,66,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00653,20250815,1,1,67,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00654,20250816,1,1,68,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00655,20250816,1,1,69,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00656,20250817,1,1,70,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00657,20250817,1,1,71,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00658,20250817,1,1,72,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00659,20250818,1,1,73,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00660,20250818,1,1,74,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00661,20250818,1,1,45,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00662,20250819,1,1,76,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00663,20250819,1,1,77,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00664,20250819,1,1,78,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00665,20250820,1,1,79,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00666,20250820,1,1,80,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00667,20250820,1,1,81,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00668,20250821,1,1,82,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00669,20250821,1,1,83,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00670,20250822,1,1,84,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00671,20250822,1,1,55,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00672,20250822,1,1,86,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00673,20250823,1,1,87,female,US,US,Syncope,recovering
+US-BISOPROLOL-00674,20250823,1,1,88,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00675,20250823,1,1,89,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00676,20250824,1,1,65,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00677,20250824,1,1,66,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00678,20250824,1,1,67,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00679,20250825,1,1,68,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00680,20250825,1,1,69,male,US,US,Rash,recovering
+US-BISOPROLOL-00681,20250825,1,1,50,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00682,20250826,1,1,71,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00683,20250826,1,1,72,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00684,20250827,1,1,73,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00685,20250827,1,1,74,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00686,20250827,1,1,75,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00687,20250828,1,1,76,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00688,20250828,1,1,77,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00689,20250828,1,1,78,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00690,20250829,1,1,79,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00691,20250829,1,1,45,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00692,20250829,1,1,81,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00693,20250830,1,1,82,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00694,20250830,1,1,83,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00695,20250830,1,1,84,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00696,20250831,1,1,85,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00697,20250831,1,1,86,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00698,20250901,1,1,87,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00699,20250901,1,1,88,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00700,20250901,1,1,89,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00701,20250902,1,1,55,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00702,20250902,1,1,66,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00703,20250902,1,1,67,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00704,20250903,1,1,68,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00705,20250903,1,1,69,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00706,20250903,1,1,70,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00707,20250904,1,1,71,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00708,20250904,1,1,72,male,US,US,Nausea,recovering
+US-BISOPROLOL-00709,20250904,1,1,73,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00710,20250905,1,1,74,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00711,20250905,1,1,50,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00712,20250905,1,1,76,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00713,20250906,1,1,77,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00714,20250906,1,1,78,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00715,20250907,1,1,79,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00716,20250907,1,1,80,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00717,20250907,1,1,81,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00718,20250908,1,1,82,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00719,20250908,1,1,83,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00720,20250908,1,1,84,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00721,20250909,1,1,45,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00722,20250909,1,1,86,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00723,20250909,1,1,87,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00724,20250910,1,1,88,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00725,20250910,1,1,89,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00726,20250910,1,1,65,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00727,20250911,1,1,66,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00728,20250911,1,1,67,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00729,20250912,1,1,68,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00730,20250912,1,1,69,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00731,20250912,1,1,55,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00732,20250913,1,1,71,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00733,20250913,1,1,72,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00734,20250913,1,1,73,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00735,20250914,1,1,74,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00736,20250914,1,1,75,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00737,20250914,1,1,76,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00738,20250915,1,1,77,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00739,20250915,1,1,78,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00740,20250915,1,1,79,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00741,20250916,1,1,50,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00742,20250916,1,1,81,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00743,20250917,1,1,82,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00744,20250917,1,1,83,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00745,20250917,1,1,84,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00746,20250918,1,1,85,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00747,20250918,1,1,86,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00748,20250918,1,1,87,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00749,20250919,1,1,88,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00750,20250919,1,1,89,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00751,20250919,1,1,45,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00752,20250920,1,1,66,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00753,20250920,1,1,67,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00754,20250920,1,1,68,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00755,20250921,1,1,69,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00756,20250921,1,1,70,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00757,20250921,1,1,71,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00758,20250922,1,1,72,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00759,20250922,1,1,73,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00760,20250923,1,1,74,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00761,20250923,1,1,55,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00762,20250923,1,1,76,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00763,20250924,1,1,77,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00764,20250924,1,1,78,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00765,20250924,1,1,79,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00766,20250925,1,1,80,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00767,20250925,1,1,81,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00768,20250925,1,1,82,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00769,20250926,1,1,83,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00770,20250926,1,1,84,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00771,20250926,1,1,50,female,US,US,Headache,recovering
+US-BISOPROLOL-00772,20250927,1,1,86,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00773,20250927,1,1,87,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00774,20250928,1,1,88,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00775,20250928,1,1,89,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00776,20250928,1,1,65,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00777,20250929,1,1,66,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00778,20250929,1,1,67,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00779,20250929,1,1,68,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00780,20250930,1,1,69,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00781,20250930,1,1,45,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00782,20250930,1,1,71,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00783,20251001,1,1,72,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00784,20251001,1,1,73,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00785,20251001,1,1,74,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00786,20251002,1,1,75,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00787,20251002,1,1,76,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00788,20251003,1,1,77,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00789,20251003,1,1,78,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00790,20251003,1,1,79,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00791,20251004,1,1,55,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00792,20251004,1,1,81,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00793,20251004,1,1,82,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00794,20251005,1,1,83,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00795,20251005,1,1,84,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00796,20251005,1,1,85,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00797,20251006,1,1,86,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00798,20251006,1,1,87,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00799,20251006,1,1,88,female,US,US,Syncope,recovering
+US-BISOPROLOL-00800,20251007,1,1,89,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00801,20251007,1,1,50,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00802,20251008,1,1,66,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00803,20251008,1,1,67,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00804,20251008,1,1,68,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00805,20251009,1,1,69,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00806,20251009,1,1,70,male,US,US,Rash,recovering
+US-BISOPROLOL-00807,20251009,1,1,71,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00808,20251010,1,1,72,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00809,20251010,1,1,73,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00810,20251010,1,1,74,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00811,20251011,1,1,45,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00812,20251011,1,1,76,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00813,20251011,1,1,77,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00814,20251012,1,1,78,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00815,20251012,1,1,79,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00816,20251012,1,1,80,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00817,20251013,1,1,81,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00818,20251013,1,1,82,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00819,20251014,1,1,83,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00820,20251014,1,1,84,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00821,20251014,1,1,55,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00822,20251015,1,1,86,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00823,20251015,1,1,87,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00824,20251015,1,1,88,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00825,20251016,1,1,89,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00826,20251016,1,1,65,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00827,20251016,1,1,66,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00828,20251017,1,1,67,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00829,20251017,1,1,68,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00830,20251017,1,1,69,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00831,20251018,1,1,50,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00832,20251018,1,1,71,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00833,20251019,1,1,72,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00834,20251019,1,1,73,male,US,US,Nausea,recovering
+US-BISOPROLOL-00835,20251019,1,1,74,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00836,20251020,1,1,75,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00837,20251020,1,1,76,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00838,20251020,1,1,77,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00839,20251021,1,1,78,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00840,20251021,1,1,79,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00841,20251021,1,1,45,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00842,20251022,1,1,81,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00843,20251022,1,1,82,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00844,20251022,1,1,83,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00845,20251023,1,1,84,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00846,20251023,1,1,85,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00847,20251024,1,1,86,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00848,20251024,1,1,87,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00849,20251024,1,1,88,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00850,20251025,1,1,89,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00851,20251025,1,1,55,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00852,20251025,1,1,66,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00853,20251026,1,1,67,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00854,20251026,1,1,68,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00855,20251026,1,1,69,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00856,20251027,1,1,70,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00857,20251027,1,1,71,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00858,20251027,1,1,72,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00859,20251028,1,1,73,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00860,20251028,1,1,74,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00861,20251029,1,1,50,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00862,20251029,1,1,76,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00863,20251029,1,1,77,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00864,20251030,1,1,78,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00865,20251030,1,1,79,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00866,20251030,1,1,80,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00867,20251031,1,1,81,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00868,20251031,1,1,82,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00869,20251031,1,1,83,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00870,20251101,1,1,84,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00871,20251101,1,1,45,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00872,20251101,1,1,86,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00873,20251102,1,1,87,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-00874,20251102,1,1,88,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-00875,20251102,1,1,89,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-00876,20251103,1,1,65,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-00877,20251103,1,1,66,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-00878,20251104,1,1,67,male,DE,DE,Rash,recovering
+US-BISOPROLOL-00879,20251104,1,1,68,female,FR,FR,Headache,recovering
+US-BISOPROLOL-00880,20251104,1,1,69,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-00881,20251105,1,1,55,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-00882,20251105,1,1,71,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-00883,20251105,1,1,72,female,US,US,Fatigue,recovering
+US-BISOPROLOL-00884,20251106,1,1,73,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-00885,20251106,1,1,74,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-00886,20251106,1,1,75,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-00887,20251107,1,1,76,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-00888,20251107,1,1,77,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-00889,20251107,1,1,78,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-00890,20251108,1,1,79,male,US,US,Chest pain,recovering
+US-BISOPROLOL-00891,20251108,1,1,50,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-00892,20251109,1,1,81,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-00893,20251109,1,1,82,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-00894,20251109,1,1,83,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-00895,20251110,1,1,84,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-00896,20251110,1,1,85,male,CA,CA,Rash,recovering
+US-BISOPROLOL-00897,20251110,1,1,86,female,US,US,Headache,recovering
+US-BISOPROLOL-00898,20251111,1,1,87,male,GB,GB,Bradycardia,recovering
+US-BISOPROLOL-00899,20251111,1,1,88,female,DE,DE,Hypotension,recovering
+US-BISOPROLOL-00900,20251111,1,1,89,male,FR,FR,Dizziness,recovering
+US-BISOPROLOL-00901,20251112,1,1,45,female,IT,IT,Fatigue,recovering
+US-BISOPROLOL-00902,20251112,1,1,66,male,JP,JP,Dyspnoea,recovering
+US-BISOPROLOL-00903,20251112,1,1,67,female,CA,CA,Asthenia,recovering
+US-BISOPROLOL-00904,20251113,1,1,68,male,US,US,Cardiac failure,recovering
+US-BISOPROLOL-00905,20251113,1,1,69,female,GB,GB,Atrioventricular block,recovering
+US-BISOPROLOL-00906,20251114,1,1,70,male,DE,DE,Nausea,recovering
+US-BISOPROLOL-00907,20251114,1,1,71,female,FR,FR,Syncope,recovering
+US-BISOPROLOL-00908,20251114,1,1,72,male,IT,IT,Chest pain,recovering
+US-BISOPROLOL-00909,20251115,1,1,73,female,JP,JP,Bronchospasm,recovering
+US-BISOPROLOL-00910,20251115,1,1,74,male,CA,CA,Peripheral oedema,recovering
+US-BISOPROLOL-00911,20251115,1,1,55,female,US,US,Insomnia,recovering
+US-BISOPROLOL-00912,20251116,1,1,76,male,GB,GB,Hyperkalaemia,recovering
+US-BISOPROLOL-00913,20251116,1,1,77,female,DE,DE,Diarrhoea,recovering
+US-BISOPROLOL-00914,20251116,1,1,78,male,FR,FR,Rash,recovering
+US-BISOPROLOL-00915,20251117,1,1,79,female,IT,IT,Headache,recovering
+US-BISOPROLOL-00916,20251117,1,1,80,male,JP,JP,Bradycardia,recovering
+US-BISOPROLOL-00917,20251117,1,1,81,female,CA,CA,Hypotension,recovering
+US-BISOPROLOL-00918,20251118,1,1,82,male,US,US,Dizziness,recovering
+US-BISOPROLOL-00919,20251118,1,1,83,female,GB,GB,Fatigue,recovering
+US-BISOPROLOL-00920,20251118,1,1,84,male,DE,DE,Dyspnoea,recovering
+US-BISOPROLOL-00921,20251119,1,1,50,female,FR,FR,Asthenia,recovering
+US-BISOPROLOL-00922,20251119,1,1,86,male,IT,IT,Cardiac failure,recovering
+US-BISOPROLOL-00923,20251120,1,1,87,female,JP,JP,Atrioventricular block,recovering
+US-BISOPROLOL-00924,20251120,1,1,88,male,CA,CA,Nausea,recovering
+US-BISOPROLOL-00925,20251120,1,1,89,female,US,US,Syncope,recovering
+US-BISOPROLOL-00926,20251121,1,1,65,male,GB,GB,Chest pain,recovering
+US-BISOPROLOL-00927,20251121,1,1,66,female,DE,DE,Bronchospasm,recovering
+US-BISOPROLOL-00928,20251121,1,1,67,male,FR,FR,Peripheral oedema,recovering
+US-BISOPROLOL-00929,20251122,1,1,68,female,IT,IT,Insomnia,recovering
+US-BISOPROLOL-00930,20251122,1,1,69,male,JP,JP,Hyperkalaemia,recovering
+US-BISOPROLOL-00931,20251122,1,1,45,female,CA,CA,Diarrhoea,recovering
+US-BISOPROLOL-00932,20251123,1,1,71,male,US,US,Rash,recovering
+US-BISOPROLOL-00933,20251123,1,1,72,female,GB,GB,Headache,recovering
+US-BISOPROLOL-00934,20251123,1,1,73,male,DE,DE,Bradycardia,recovering
+US-BISOPROLOL-00935,20251124,1,1,74,female,FR,FR,Hypotension,recovering
+US-BISOPROLOL-00936,20251124,1,1,75,male,IT,IT,Dizziness,recovering
+US-BISOPROLOL-00937,20251125,1,1,76,female,JP,JP,Fatigue,recovering
+US-BISOPROLOL-00938,20251125,1,1,77,male,CA,CA,Dyspnoea,recovering
+US-BISOPROLOL-00939,20251125,1,1,78,female,US,US,Asthenia,recovering
+US-BISOPROLOL-00940,20251126,1,1,79,male,GB,GB,Cardiac failure,recovering
+US-BISOPROLOL-00941,20251126,1,1,55,female,DE,DE,Atrioventricular block,recovering
+US-BISOPROLOL-00942,20251126,1,1,81,male,FR,FR,Nausea,recovering
+US-BISOPROLOL-00943,20251127,1,1,82,female,IT,IT,Syncope,recovering
+US-BISOPROLOL-00944,20251127,1,1,83,male,JP,JP,Chest pain,recovering
+US-BISOPROLOL-00945,20251127,1,1,84,female,CA,CA,Bronchospasm,recovering
+US-BISOPROLOL-00946,20251128,1,1,85,male,US,US,Peripheral oedema,recovering
+US-BISOPROLOL-00947,20251128,1,1,86,female,GB,GB,Insomnia,recovering
+US-BISOPROLOL-00948,20251128,1,1,87,male,DE,DE,Hyperkalaemia,recovering
+US-BISOPROLOL-00949,20251129,1,1,88,female,FR,FR,Diarrhoea,recovering
+US-BISOPROLOL-00950,20251129,1,1,89,male,IT,IT,Rash,recovering
+US-BISOPROLOL-00951,20251130,1,1,50,female,JP,JP,Headache,recovering
+US-BISOPROLOL-00952,20251130,1,1,66,male,CA,CA,Bradycardia,recovering
+US-BISOPROLOL-00953,20251130,1,1,67,female,US,US,Hypotension,recovering
+US-BISOPROLOL-00954,20251201,1,1,68,male,GB,GB,Dizziness,recovering
+US-BISOPROLOL-00955,20251201,1,1,69,female,DE,DE,Fatigue,recovering
+US-BISOPROLOL-00956,20251201,1,1,70,male,FR,FR,Dyspnoea,recovering
+US-BISOPROLOL-00957,20251202,1,1,71,female,IT,IT,Asthenia,recovering
+US-BISOPROLOL-00958,20251202,1,1,72,male,JP,JP,Cardiac failure,recovering
+US-BISOPROLOL-00959,20251202,1,1,73,female,CA,CA,Atrioventricular block,recovering
+US-BISOPROLOL-00960,20251203,1,1,74,male,US,US,Nausea,recovering
+US-BISOPROLOL-00961,20251203,1,1,45,female,GB,GB,Syncope,recovering
+US-BISOPROLOL-00962,20251203,1,1,76,male,DE,DE,Chest pain,recovering
+US-BISOPROLOL-00963,20251204,1,1,77,female,FR,FR,Bronchospasm,recovering
+US-BISOPROLOL-00964,20251204,1,1,78,male,IT,IT,Peripheral oedema,recovering
+US-BISOPROLOL-00965,20251205,1,1,79,female,JP,JP,Insomnia,recovering
+US-BISOPROLOL-00966,20251205,1,1,80,male,CA,CA,Hyperkalaemia,recovering
+US-BISOPROLOL-00967,20251205,1,1,81,female,US,US,Diarrhoea,recovering
+US-BISOPROLOL-00968,20251206,1,1,82,male,GB,GB,Rash,recovering
+US-BISOPROLOL-00969,20251206,1,1,83,female,DE,DE,Headache,recovering
+US-BISOPROLOL-00970,20251206,1,1,84,male,FR,FR,Bradycardia,recovering
+US-BISOPROLOL-00971,20251207,1,1,55,female,IT,IT,Hypotension,recovering
+US-BISOPROLOL-00972,20251207,1,1,86,male,JP,JP,Dizziness,recovering
+US-BISOPROLOL-00973,20251207,1,1,87,female,CA,CA,Fatigue,recovering
+US-BISOPROLOL-00974,20251208,1,1,88,male,US,US,Dyspnoea,recovering
+US-BISOPROLOL-00975,20251208,1,1,89,female,GB,GB,Asthenia,recovering
+US-BISOPROLOL-00976,20251208,1,1,65,male,DE,DE,Cardiac failure,recovering
+US-BISOPROLOL-00977,20251209,1,1,66,female,FR,FR,Atrioventricular block,recovering
+US-BISOPROLOL-00978,20251209,1,1,67,male,IT,IT,Nausea,recovering
+US-BISOPROLOL-00979,20251209,1,1,68,female,JP,JP,Syncope,recovering
+US-BISOPROLOL-00980,20251210,1,1,69,male,CA,CA,Chest pain,recovering
+US-BISOPROLOL-00981,20251210,1,1,50,female,US,US,Bronchospasm,recovering
+US-BISOPROLOL-00982,20251211,1,1,71,male,GB,GB,Peripheral oedema,recovering
+US-BISOPROLOL-00983,20251211,1,1,72,female,DE,DE,Insomnia,recovering
+US-BISOPROLOL-00984,20251211,1,1,73,male,FR,FR,Hyperkalaemia,recovering
+US-BISOPROLOL-00985,20251212,1,1,74,female,IT,IT,Diarrhoea,recovering
+US-BISOPROLOL-00986,20251212,1,1,75,male,JP,JP,Rash,recovering
+US-BISOPROLOL-00987,20251212,1,1,76,female,CA,CA,Headache,recovering
+US-BISOPROLOL-00988,20251213,1,1,77,male,US,US,Bradycardia,recovering
+US-BISOPROLOL-00989,20251213,1,1,78,female,GB,GB,Hypotension,recovering
+US-BISOPROLOL-00990,20251213,1,1,79,male,DE,DE,Dizziness,recovering
+US-BISOPROLOL-00991,20251214,1,1,45,female,FR,FR,Fatigue,recovering
+US-BISOPROLOL-00992,20251214,1,1,81,male,IT,IT,Dyspnoea,recovering
+US-BISOPROLOL-00993,20251214,1,1,82,female,JP,JP,Asthenia,recovering
+US-BISOPROLOL-00994,20251215,1,1,83,male,CA,CA,Cardiac failure,recovering
+US-BISOPROLOL-00995,20251215,1,1,84,female,US,US,Atrioventricular block,recovering
+US-BISOPROLOL-00996,20251216,1,1,85,male,GB,GB,Nausea,recovering
+US-BISOPROLOL-00997,20251216,1,1,86,female,DE,DE,Syncope,recovering
+US-BISOPROLOL-00998,20251216,1,1,87,male,FR,FR,Chest pain,recovering
+US-BISOPROLOL-00999,20251217,1,1,88,female,IT,IT,Bronchospasm,recovering
+US-BISOPROLOL-01000,20251217,1,1,89,male,JP,JP,Peripheral oedema,recovering
+US-BISOPROLOL-01001,20251217,1,1,55,female,CA,CA,Insomnia,recovering
+US-BISOPROLOL-01002,20251218,1,1,66,male,US,US,Hyperkalaemia,recovering
+US-BISOPROLOL-01003,20251218,1,1,67,female,GB,GB,Diarrhoea,recovering
+US-BISOPROLOL-01004,20251218,1,1,68,male,DE,DE,Rash,recovering
+US-BISOPROLOL-01005,20251219,1,1,69,female,FR,FR,Headache,recovering
+US-BISOPROLOL-01006,20251219,1,1,70,male,IT,IT,Bradycardia,recovering
+US-BISOPROLOL-01007,20251219,1,1,71,female,JP,JP,Hypotension,recovering
+US-BISOPROLOL-01008,20251220,1,1,72,male,CA,CA,Dizziness,recovering
+US-BISOPROLOL-01009,20251220,1,1,73,female,US,US,Fatigue,recovering
+US-BISOPROLOL-01010,20251221,1,1,74,male,GB,GB,Dyspnoea,recovering
+US-BISOPROLOL-01011,20251221,1,1,50,female,DE,DE,Asthenia,recovering
+US-BISOPROLOL-01012,20251221,1,1,76,male,FR,FR,Cardiac failure,recovering
+US-BISOPROLOL-01013,20251222,1,1,77,female,IT,IT,Atrioventricular block,recovering
+US-BISOPROLOL-01014,20251222,1,1,78,male,JP,JP,Nausea,recovering
+US-BISOPROLOL-01015,20251222,1,1,79,female,CA,CA,Syncope,recovering
+US-BISOPROLOL-01016,20251223,1,1,80,male,US,US,Chest pain,recovering
+US-BISOPROLOL-01017,20251223,1,1,81,female,GB,GB,Bronchospasm,recovering
+US-BISOPROLOL-01018,20251223,1,1,82,male,DE,DE,Peripheral oedema,recovering
+US-BISOPROLOL-01019,20251224,1,1,83,female,FR,FR,Insomnia,recovering
+US-BISOPROLOL-01020,20251224,1,1,84,male,IT,IT,Hyperkalaemia,recovering
+US-BISOPROLOL-01021,20251224,1,1,45,female,JP,JP,Diarrhoea,recovering
+US-BISOPROLOL-01022,20251225,1,1,86,male,CA,CA,Rash,recovering
+US-BISOPROLOL-01023,20251225,1,1,87,female,US,US,Headache,recovering
+US-BISOPROLOL-01024,20251226,2,2,88,male,GB,GB,Rash,recovered
+US-BISOPROLOL-00051,20250113,1,1,50,female,GB,GB,Fatigue,recovered
+US-BISOPROLOL-00052,20250114,1,1,66,male,DE,DE,Dyspnoea,recovered
+US-BISOPROLOL-00053,20250114,1,1,67,female,FR,FR,Asthenia,recovered
+US-BISOPROLOL-00054,20250114,1,1,68,male,IT,IT,Cardiac failure,recovered
+US-BISOPROLOL-00055,20250115,1,1,69,female,JP,JP,Atrioventricular block,recovered
+US-BISOPROLOL-00056,20250115,1,1,70,male,CA,CA,Nausea,recovered
+US-BISOPROLOL-00057,20250115,1,1,71,female,US,US,Syncope,recovered
+US-BISOPROLOL-00058,20250116,1,1,72,male,GB,GB,Chest pain,recovered
+US-BISOPROLOL-00059,20250116,1,1,73,female,DE,DE,Bronchospasm,recovered
+US-BISOPROLOL-00060,20250116,1,1,74,male,FR,FR,Peripheral oedema,recovered
+US-BISOPROLOL-00061,20250117,1,1,45,female,IT,IT,Insomnia,recovered
+US-BISOPROLOL-00062,20250117,1,1,76,male,JP,JP,Hyperkalaemia,recovered
+US-BISOPROLOL-00063,20250118,1,1,77,female,CA,CA,Diarrhoea,recovered
+US-BISOPROLOL-00064,20250118,1,1,78,male,US,US,Rash,recovered
+US-BISOPROLOL-00065,20250118,1,1,79,female,GB,GB,Headache,recovered
+US-BISOPROLOL-00066,20250119,1,1,80,male,DE,DE,Bradycardia,recovered
+US-BISOPROLOL-00067,20250119,1,1,81,female,FR,FR,Hypotension,recovered
+US-BISOPROLOL-00068,20250119,1,1,82,male,IT,IT,Dizziness,recovered
+US-BISOPROLOL-00069,20250120,1,1,83,female,JP,JP,Fatigue,recovered
+US-BISOPROLOL-00070,20250120,1,1,84,male,CA,CA,Dyspnoea,recovered
+US-BISOPROLOL-00071,20250120,1,1,55,female,US,US,Asthenia,recovered
+US-BISOPROLOL-00072,20250121,1,1,86,male,GB,GB,Cardiac failure,recovered
+US-BISOPROLOL-00073,20250121,1,1,87,female,DE,DE,Atrioventricular block,recovered
+US-BISOPROLOL-00074,20250121,1,1,88,male,FR,FR,Nausea,recovered
+US-BISOPROLOL-00075,20250122,1,1,89,female,IT,IT,Syncope,recovered
+US-BISOPROLOL-00076,20250122,1,1,65,male,JP,JP,Chest pain,recovered
+US-BISOPROLOL-00077,20250123,1,1,66,female,CA,CA,Bronchospasm,recovered
+US-BISOPROLOL-00078,20250123,1,1,67,male,US,US,Peripheral oedema,recovered
+US-BISOPROLOL-00079,20250123,1,1,68,female,GB,GB,Insomnia,recovered
+US-BISOPROLOL-00080,20250124,1,1,69,male,DE,DE,Hyperkalaemia,recovered
+US-BISOPROLOL-00081,20250124,1,1,50,female,FR,FR,Diarrhoea,recovered
+US-BISOPROLOL-00082,20250124,1,1,71,male,IT,IT,Rash,recovered
+US-BISOPROLOL-00083,20250125,1,1,72,female,JP,JP,Headache,recovered
+US-BISOPROLOL-00084,20250125,1,1,73,male,CA,CA,Bradycardia,recovered
+US-BISOPROLOL-00085,20250125,1,1,74,female,US,US,Hypotension,recovered
+US-BISOPROLOL-00086,20250126,1,1,75,male,GB,GB,Dizziness,recovered
+US-BISOPROLOL-00087,20250126,1,1,76,female,DE,DE,Fatigue,recovered
+US-BISOPROLOL-00088,20250126,1,1,77,male,FR,FR,Dyspnoea,recovered
+US-BISOPROLOL-00089,20250127,1,1,78,female,IT,IT,Asthenia,recovered
+US-BISOPROLOL-00090,20250127,1,1,79,male,JP,JP,Cardiac failure,recovered
+US-BISOPROLOL-00091,20250128,1,1,45,female,CA,CA,Atrioventricular block,recovered
+US-BISOPROLOL-00092,20250128,1,1,81,male,US,US,Nausea,recovered
+US-BISOPROLOL-00093,20250128,1,1,82,female,GB,GB,Syncope,recovered
+US-BISOPROLOL-00094,20250129,1,1,83,male,DE,DE,Chest pain,recovered

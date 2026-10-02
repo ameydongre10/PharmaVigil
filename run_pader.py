@@ -69,10 +69,19 @@ def main():
 
     args = parser.parse_args()
 
+    dataset_path = args.data
+    if not os.path.exists(dataset_path):
+        if os.path.exists("sample_data/sample_icsr_dataset.xlsx"):
+            dataset_path = "sample_data/sample_icsr_dataset.xlsx"
+            print(f"[!] Dataset '{args.data}' not found. Using bundled sample: {dataset_path}")
+        elif os.path.exists("sample_data/sample_icsr_dataset.csv"):
+            dataset_path = "sample_data/sample_icsr_dataset.csv"
+            print(f"[!] Dataset '{args.data}' not found. Using bundled sample: {dataset_path}")
+
     print("========================================================================")
     print("GENAR PADER REGULATORY REPORT GENERATION PIPELINE")
     print("========================================================================")
-    print(f"Input Dataset    : {args.data}")
+    print(f"Input Dataset    : {dataset_path}")
     print(f"Output Directory : {args.output_dir}")
     print(f"LLM Provider Mode: {'MOCK (Offline)' if args.mock or not os.getenv('LLM_API_KEY') else 'LIVE API'}")
 
@@ -95,7 +104,7 @@ def main():
     orchestrator = PADEROrchestrator(llm_client=client)
 
     report = orchestrator.run(
-        file_path=args.data,
+        file_path=dataset_path,
         output_dir=args.output_dir,
         review_decision=review_decision,
         reviewer_name=args.reviewer,

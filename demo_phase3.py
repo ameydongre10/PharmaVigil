@@ -7,8 +7,12 @@ from src.evidence_collector import collect_evidence
 from src.context_builder import ContextBuilder
 from src.report_config import PADER_CONFIG
 
+import os
+
 def run_demo():
     file_path = "Bisoprolol_icsr_sample_1068rows.xlsx"
+    if not os.path.exists(file_path):
+        file_path = "sample_data/sample_icsr_dataset.xlsx"
     df = load_and_normalize_data(file_path)
     engine = AnalysisEngine(df)
 

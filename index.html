@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PharmaVigil — Regulatory Intelligence & Automated PADER Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+    .prose th { background: #f8fafc; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; font-weight: 600; }
+    .prose td { padding: 0.75rem 1rem; border: 1px solid #e2e8f0; }
+    .prose tr:nth-child(even) { background: #fdfdfd; }
+    .prose h1 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+    .prose h2 { font-size: 1.25rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #1e293b; }
+    .prose h3 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.25rem; color: #334155; }
+    .prose p { margin: 0.5rem 0; color: #334155; line-height: 1.6; }
+    .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.5rem; }
+    .prose hr { margin: 1.5rem 0; border: 0; border-top: 1px solid #e2e8f0; }
+    .prose blockquote { border-left: 4px solid #cbd5e1; padding-left: 1rem; color: #64748b; font-style: italic; }
+    @media print {
+      header, .no-print, #leftPanel { display: none !important; }
+      body { background: white; color: black; }
+      .lg\:col-span-8 { width: 100% !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <!-- Top Navigation Bar -->
+  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-teal-500 flex items-center justify-center text-slate-900 font-bold text-lg shadow-sm">
+          <i class="fa-solid fa-notes-medical"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">PharmaVigil</h1>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">FDA 21 CFR § 314.80</span>
+          </div>
+          <p class="text-xs text-slate-400">Periodic Adverse Drug Experience Report &bull; Regulatory Intelligence</p>
+        </div>
+      </div>
+
+      <!-- Backend Connection Status & Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-3 text-xs">
+        <!-- Live Backend Status Badge -->
+        <div id="backendStatusPill" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer" onclick="toggleBackendModal()">
+          <span id="backendStatusDot" class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full animate-ping"></span>
+          <span id="backendStatusText">Connecting to Render...</span>
+          <i class="fa-solid fa-gear ml-1.5 text-slate-400"></i>
+        </div>
+
+        <a id="btnApiDocs" href="https://pader-regulatory-engine.onrender.com/docs" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition flex items-center">
+          <i class="fa-solid fa-code mr-1"></i> API Docs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Waking Up Banner (Render Cold Start Notification) -->
+  <div id="wakingBanner" class="hidden bg-amber-500 text-slate-950 px-4 py-2 text-xs font-semibold text-center flex items-center justify-center space-x-2 shadow-inner">
+    <i class="fa-solid fa-hourglass-half fa-spin"></i>
+    <span>Render free tier spins down on inactivity. Waking backend up (takes ~30s on first load)... <span id="wakingRetryCountdown"></span></span>
+  </div>
+
+  <!-- Main Application Body -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- LEFT CONTROL PANEL (4 Columns) -->
+      <div class="lg:col-span-4 space-y-6" id="leftPanel">
+        
+        <!-- Step 1: ICSR Dataset Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-database text-teal-600 mr-2"></i> 1. Source ICSR Dataset
+            </h2>
+            <span class="text-xs text-slate-500" id="datasetBadge">Reference Ready</span>
+          </div>
+
+          <p class="text-xs text-slate-600 mb-3">
+            Load the authoritative 1,068-row Bisoprolol benchmark dataset from Render, or upload a custom ICSR line-listing.
+          </p>
+
+          <button onclick="loadSampleData()" id="btnLoadSample" class="w-full mb-3 py-2 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-semibold flex items-center justify-center transition">
+            <i class="fa-solid fa-bolt text-teal-600 mr-2"></i> Load Bundled Bisoprolol Dataset (1,068 rows)
+          </button>
+
+          <!-- Upload Dropzone -->
+          <div class="relative border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-lg p-4 text-center cursor-pointer transition" id="dropzone">
+            <input type="file" id="fileInput" accept=".xlsx,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
+            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
+            <p class="text-xs font-medium text-slate-700">Drop ICSR Excel / CSV here</p>
+            <p class="text-[10px] text-slate-400">or click to browse from device</p>
+          </div>
+
+          <!-- Dataset Stats Mini-Grid -->
+          <div id="datasetStats" class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 p-2 rounded">
+              <span class="text-slate-500 text-[11px] block">Dataset:</span>
+              <span class="font-semibold text-slate-800 truncate block" id="statDatasetName">Bisoprolol_1068rows</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded">
+              <span class="text-slate-500 text-[11px] block">Unique Cases:</span>
+              <span class="font-semibold text-slate-800" id="statCaseCount">1,024 cases</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded">
+              <span class="text-slate-500 text-[11px] block">Serious Cases:</span>
+              <span class="font-semibold text-rose-600" id="statSeriousCount">99.9% (1,023)</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded">
+              <span class="text-slate-500 text-[11px] block">15-Day Alerts:</span>
+              <span class="font-semibold text-amber-600" id="statAlertCount">1,023 alerts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Grounded LLM Pipeline Configuration -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center">
+            <i class="fa-solid fa-brain text-indigo-600 mr-2"></i> 2. Grounded Pipeline Engine
+          </h2>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">LLM Execution Mode</label>
+              <select id="llmProvider" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none" onchange="toggleApiKeyField()">
+                <option value="mock">Offline Deterministic Mock (100% Grounded, Free)</option>
+                <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+                <option value="gemini">Google Gemini (Gemini 1.5 / 2.0)</option>
+                <option value="anthropic">Anthropic Claude</option>
+                <option value="generic">Custom OpenAI-Compatible API</option>
+              </select>
+            </div>
+
+            <div id="apiKeyGroup" class="hidden">
+              <label class="block text-slate-700 font-medium mb-1">API Key</label>
+              <input type="password" id="apiKey" placeholder="sk-..." class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+              <p class="text-[10px] text-slate-400 mt-0.5">Kept in-memory for the current request only.</p>
+            </div>
+
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Model Identifier</label>
+              <input type="text" id="modelName" value="gpt-4o-mini" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded p-2.5 text-[11px] text-slate-600 space-y-1">
+              <p><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i> <strong>Zero Hallucinated Calculations:</strong> Raw math executed by deterministic layer on Render backend.</p>
+              <p><i class="fa-solid fa-filter text-indigo-600 mr-1"></i> <strong>Context Boundary:</strong> Only pre-computed evidence packets with strict verification schemas are fed to LLM.</p>
+            </div>
+
+            <button onclick="triggerPipeline()" id="btnGenerate" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center shadow transition">
+              <i class="fa-solid fa-play text-teal-400 mr-2"></i> Run Regulatory Pipeline
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Human Medical Reviewer Console -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5" id="reviewConsoleCard">
+          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center">
+            <i class="fa-solid fa-signature text-amber-600 mr-2"></i> 3. Human Review Station
+          </h2>
+          <p class="text-xs text-slate-600 mb-3">
+            In compliance with FDA regulations, automated evaluation does not equal approval. An authorized medical reviewer must explicitly sign off.
+          </p>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Reviewer Name & Credentials</label>
+              <input type="text" id="reviewerName" value="Dr. J. Doe, Qualified Safety Reviewer" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Regulatory Sign-Off Decision</label>
+              <select id="reviewDecisionSelect" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+                <option value="APPROVED">APPROVED (Authorize PADER Regulatory Submission)</option>
+                <option value="NEEDS_REVISION">NEEDS_REVISION (Request Clarification / Edits)</option>
+                <option value="REJECTED">REJECTED (Inconsistent or Invalid Data)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Audit Notes / Comments</label>
+              <textarea id="reviewerNotes" rows="2" placeholder="Verified all 15-day alert tables and MedDRA counts against source evidence." class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+            </div>
+            <button onclick="submitHumanReview()" id="btnSubmitReview" class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center transition disabled:opacity-50" disabled>
+              <i class="fa-solid fa-stamp mr-2"></i> Record Reviewer Decision
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT REPORT VIEWER (8 Columns) -->
+      <div class="lg:col-span-8 space-y-6">
+        
+        <!-- Status & Compliance Header Banner -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <h2 class="text-base font-bold text-slate-900" id="currentReportTitle">PADER-BISOPROLOL-REPORT</h2>
+                <span id="statusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                  DRAFT_PENDING_REVIEW
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5" id="reportSubheader">Click "Run Regulatory Pipeline" to generate a fully grounded report.</p>
+            </div>
+            
+            <div class="flex items-center space-x-2 no-print">
+              <button onclick="downloadMarkdown()" id="btnDownload" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 text-xs font-medium transition disabled:opacity-50" disabled>
+                <i class="fa-solid fa-download mr-1"></i> Export .MD
+              </button>
+              <button onclick="downloadJsonAudit()" id="btnAuditJson" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 text-xs font-medium transition disabled:opacity-50" disabled>
+                <i class="fa-solid fa-file-code mr-1"></i> Audit JSON
+              </button>
+              <button onclick="window.print()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 text-xs font-medium transition">
+                <i class="fa-solid fa-print mr-1"></i> Print
+              </button>
+            </div>
+          </div>
+
+          <!-- Evaluation Score Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-3 border-t border-slate-100 text-center">
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-[11px] text-slate-500 font-medium block">Factual Consistency</span>
+              <span class="text-base font-bold text-emerald-600" id="scoreFactual">--%</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-[11px] text-slate-500 font-medium block">Grounding Score</span>
+              <span class="text-base font-bold text-emerald-600" id="scoreGrounding">--%</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-[11px] text-slate-500 font-medium block">Required Sections</span>
+              <span class="text-base font-bold text-slate-800" id="scoreSections">-- / 8</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-[11px] text-slate-500 font-medium block">Automated Audit</span>
+              <span class="text-base font-bold text-slate-600" id="scoreAudit">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabbed Report Display -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="border-b border-slate-200 bg-slate-50 px-4 flex space-x-6 text-xs font-semibold no-print">
+            <button onclick="switchTab('reportView')" id="tabBtnReport" class="py-3 text-teal-700 border-b-2 border-teal-600">
+              <i class="fa-solid fa-file-lines mr-1.5"></i> Formatted PADER Report
+            </button>
+            <button onclick="switchTab('auditView')" id="tabBtnAudit" class="py-3 text-slate-500 hover:text-slate-800">
+              <i class="fa-solid fa-microscope mr-1.5"></i> Grounding Verification Details
+            </button>
+            <button onclick="switchTab('rawMdView')" id="tabBtnRaw" class="py-3 text-slate-500 hover:text-slate-800">
+              <i class="fa-brands fa-markdown mr-1.5"></i> Raw Markdown Source
+            </button>
+          </div>
+
+          <!-- Tab 1: Rendered Document -->
+          <div id="tabReport" class="p-6">
+            <div id="reportLoadingSpinner" class="hidden text-center py-12">
+              <i class="fa-solid fa-circle-notch fa-spin text-3xl text-teal-600 mb-3"></i>
+              <p class="text-sm font-medium text-slate-700">Connecting to Render backend & running deterministic pipeline...</p>
+              <p class="text-xs text-slate-400 mt-1">Collecting evidence packets & validating hallucination guards</p>
+            </div>
+            <div id="reportEmptyState" class="text-center py-16 text-slate-400">
+              <i class="fa-solid fa-clipboard-check text-4xl mb-3 text-slate-300"></i>
+              <p class="text-sm font-medium text-slate-600">No PADER Report Generated Yet</p>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Click "Run Regulatory Pipeline" in the control panel to generate an audit-ready PADER safety report.</p>
+            </div>
+            <div id="reportRenderedContent" class="prose max-w-none text-slate-800 text-sm hidden"></div>
+          </div>
+
+          <!-- Tab 2: Grounding & Audit Verification -->
+          <div id="tabAudit" class="p-6 hidden">
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-slate-900">Hallucination & Number Extraction Audit</h3>
+              <p class="text-xs text-slate-500">Every single numeric figure in the LLM-generated narrative is cross-checked against deterministic evidence.</p>
+            </div>
+            <div id="auditCardsContainer" class="space-y-3">
+              <p class="text-xs text-slate-400 text-center py-8">Generate a report to inspect per-section grounding verification tables.</p>
+            </div>
+          </div>
+
+          <!-- Tab 3: Raw Markdown -->
+          <div id="tabRaw" class="p-6 hidden">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Raw Regulatory Markdown Text</span>
+              <button onclick="copyRawMarkdown()" class="text-xs text-teal-600 hover:text-teal-700 font-medium">
+                <i class="fa-regular fa-copy mr-1"></i> Copy
+              </button>
+            </div>
+            <pre id="rawMarkdownContent" class="bg-slate-900 text-slate-200 p-4 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap max-h-[600px]">/* Raw markdown will appear here after generation */</pre>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Backend Settings Modal -->
+  <div id="backendModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full shadow-2xl border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center">
+          <i class="fa-solid fa-server text-teal-600 mr-2"></i> Backend Connection Settings
+        </h3>
+        <button onclick="toggleBackendModal()" class="text-slate-400 hover:text-slate-600 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Target API Base URL</label>
+          <input type="text" id="backendUrlInput" value="https://pader-regulatory-engine.onrender.com" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+        </div>
+
+        <div class="flex space-x-2">
+          <button onclick="setBackendPreset('https://pader-regulatory-engine.onrender.com')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">
+            Render Production
+          </button>
+          <button onclick="setBackendPreset('http://localhost:8000')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">
+            Localhost:8000
+          </button>
+        </div>
+
+        <div id="modalTestResult" class="p-2.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px]">
+          Status: Ready to test connection.
+        </div>
+
+        <div class="flex space-x-2 pt-2">
+          <button onclick="testAndSaveBackend()" class="flex-1 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded font-semibold text-xs transition">
+            Test & Save Connection
+          </button>
+          <button onclick="toggleBackendModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded font-semibold text-xs transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration & State
+    let BACKEND_URL = localStorage.getItem("PADER_BACKEND_URL") || "https://pader-regulatory-engine.onrender.com";
+    let currentReportId = null;
+    let currentReportData = null;
+    let currentMarkdown = "";
+    let uploadedFilePath = null;
+
+    document.getElementById("backendUrlInput").value = BACKEND_URL;
+    document.getElementById("btnApiDocs").href = `${BACKEND_URL}/docs`;
+
+    // Initialize Connection Check
+    window.addEventListener("DOMContentLoaded", () => {
+      checkBackendHealth(true);
+    });
+
+    async function checkBackendHealth(initial = false) {
+      const pill = document.getElementById("backendStatusPill");
+      const dot = document.getElementById("backendStatusDot");
+      const text = document.getElementById("backendStatusText");
+      const banner = document.getElementById("wakingBanner");
+
+      const startTime = performance.now();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const res = await fetch(`${BACKEND_URL}/api/health`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const latency = Math.round(performance.now() - startTime);
+          dot.className = "w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse";
+          text.innerText = `Render: Online (${latency}ms)`;
+          pill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 cursor-pointer";
+          banner.classList.add("hidden");
+          return true;
+        } else {
+          throw new Error("HTTP " + res.status);
+        }
+      } catch (err) {
+        dot.className = "w-2 h-2 mr-1.5 bg-amber-400 rounded-full animate-ping";
+        text.innerText = "Render Backend Sleeping...";
+        pill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/30 cursor-pointer";
+        banner.classList.remove("hidden");
+        
+        // Auto-retry waking up Render
+        setTimeout(() => checkBackendHealth(), 6000);
+        return false;
+      }
+    }
+
+    function toggleBackendModal() {
+      const modal = document.getElementById("backendModal");
+      modal.classList.toggle("hidden");
+    }
+
+    function setBackendPreset(url) {
+      document.getElementById("backendUrlInput").value = url;
+    }
+
+    async function testAndSaveBackend() {
+      const inputUrl = document.getElementById("backendUrlInput").value.trim().replace(/\/+$/, "");
+      const resultBox = document.getElementById("modalTestResult");
+      resultBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin mr-1'></i> Testing connection...";
+
+      try {
+        const start = performance.now();
+        const res = await fetch(`${inputUrl}/api/health`);
+        const latency = Math.round(performance.now() - start);
+
+        if (res.ok) {
+          BACKEND_URL = inputUrl;
+          localStorage.setItem("PADER_BACKEND_URL", BACKEND_URL);
+          document.getElementById("btnApiDocs").href = `${BACKEND_URL}/docs`;
+          resultBox.className = "p-2.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px]";
+          resultBox.innerHTML = `<strong>Success!</strong> Connected in ${latency}ms. Saved as active backend.`;
+          checkBackendHealth();
+          setTimeout(() => toggleBackendModal(), 1200);
+        } else {
+          throw new Error(`HTTP ${res.status}`);
+        }
+      } catch (err) {
+        resultBox.className = "p-2.5 rounded bg-rose-50 border border-rose-200 text-rose-800 text-[11px]";
+        resultBox.innerHTML = `<strong>Failed to connect:</strong> ${err.message}. If this is Render, it may be booting up.`;
+      }
+    }
+
+    function toggleApiKeyField() {
+      const prov = document.getElementById("llmProvider").value;
+      const grp = document.getElementById("apiKeyGroup");
+      if (prov === "mock") {
+        grp.classList.add("hidden");
+      } else {
+        grp.classList.remove("hidden");
+      }
+    }
+
+    async function loadSampleData() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/sample-data`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        document.getElementById("statDatasetName").innerText = data.dataset_name;
+        document.getElementById("statCaseCount").innerText = `${data.total_cases.toLocaleString()} cases`;
+        document.getElementById("statSeriousCount").innerText = `${data.serious_percentage}% (${data.serious_cases.toLocaleString()})`;
+        document.getElementById("statAlertCount").innerText = `${data.expedited_alerts.toLocaleString()} alerts`;
+        uploadedFilePath = null;
+        alert(`Loaded reference dataset from Render: ${data.dataset_name} (${data.total_cases.toLocaleString()} unique cases, ${data.total_rows.toLocaleString()} rows). Ready for generation.`);
+      } catch (err) {
+        alert("Error loading sample dataset from backend: " + err.message);
+      }
+    }
+
+    async function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fd = new FormData();
+      fd.append("file", file);
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: fd });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        uploadedFilePath = data.stored_path;
+        document.getElementById("statDatasetName").innerText = data.filename;
+        document.getElementById("statCaseCount").innerText = `${data.unique_cases.toLocaleString()} cases`;
+        document.getElementById("statSeriousCount").innerText = `${data.serious_cases.toLocaleString()} serious`;
+        document.getElementById("datasetBadge").innerText = "Custom File Loaded";
+        alert(`File uploaded to Render backend: ${data.filename} (${data.unique_cases.toLocaleString()} cases)`);
+      } catch (err) {
+        alert("Upload error: " + err.message);
+      }
+    }
+
+    async function triggerPipeline() {
+      const btn = document.getElementById("btnGenerate");
+      const spinner = document.getElementById("reportLoadingSpinner");
+      const emptyState = document.getElementById("reportEmptyState");
+      const renderedContent = document.getElementById("reportRenderedContent");
+
+      btn.disabled = true;
+      spinner.classList.remove("hidden");
+      emptyState.classList.add("hidden");
+      renderedContent.classList.add("hidden");
+
+      const provider = document.getElementById("llmProvider").value;
+      const apiKey = document.getElementById("apiKey").value;
+      const model = document.getElementById("modelName").value;
+
+      const payload = {
+        file_path: uploadedFilePath,
+        llm_provider: provider,
+        api_key: apiKey || null,
+        model_name: model || "gpt-4o-mini"
+      };
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Generation failed.");
+        }
+
+        const data = await res.json();
+        currentReportId = data.report_id;
+        currentReportData = data.report;
+
+        // Fetch full markdown
+        const mdRes = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/markdown`);
+        currentMarkdown = await mdRes.text();
+
+        updateReportUI(data);
+      } catch (err) {
+        alert("Generation error: " + err.message);
+        emptyState.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add("hidden");
+      }
+    }
+
+    function updateReportUI(data) {
+      const ev = data.evaluation;
+      document.getElementById("currentReportTitle").innerText = data.report_id;
+      document.getElementById("reportSubheader").innerText = `Reporting Period: ${currentReportData.metadata.reporting_period_start} to ${currentReportData.metadata.reporting_period_end}`;
+      
+      const badge = document.getElementById("statusBadge");
+      badge.innerText = data.report_status;
+      if (data.report_status === "HUMAN_APPROVED") {
+        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200";
+      } else if (data.report_status === "NEEDS_REVISION") {
+        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200";
+      } else if (data.report_status === "REJECTED") {
+        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200";
+      } else {
+        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200";
+      }
+
+      document.getElementById("scoreFactual").innerText = `${ev.factual_consistency_score}%`;
+      document.getElementById("scoreGrounding").innerText = `${ev.grounding_score}%`;
+      document.getElementById("scoreSections").innerText = `${ev.required_sections_present} / ${ev.required_sections_total}`;
+      document.getElementById("scoreAudit").innerText = ev.automated_evaluation_status;
+
+      // Render Markdown HTML
+      const renderedContent = document.getElementById("reportRenderedContent");
+      renderedContent.innerHTML = marked.parse(currentMarkdown);
+      renderedContent.classList.remove("hidden");
+
+      // Raw Markdown tab
+      document.getElementById("rawMarkdownContent").innerText = currentMarkdown;
+
+      // Populate Audit Cards
+      renderAuditDetails(ev);
+
+      // Enable export buttons & review button
+      document.getElementById("btnDownload").disabled = false;
+      document.getElementById("btnAuditJson").disabled = false;
+      document.getElementById("btnSubmitReview").disabled = false;
+    }
+
+    function renderAuditDetails(ev) {
+      const container = document.getElementById("auditCardsContainer");
+      let html = "";
+
+      for (const [secName, details] of Object.entries(ev.section_details)) {
+        const isPass = details.status === "PASS";
+        const badgeColor = isPass ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-rose-100 text-rose-800 border-rose-200";
+        
+        html += `
+          <div class="border border-slate-200 rounded-lg p-3 bg-white text-xs">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-slate-800">${secName}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeColor} border">${details.status}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 space-y-0.5">
+              <p>Type: <span class="font-mono text-slate-700">${details.type}</span> &bull; Evidence IDs: ${details.evidence_ids_count}</p>
+              ${details.warnings && details.warnings.length ? `<p class="text-amber-600 font-medium">Warnings: ${details.warnings.join(", ")}</p>` : `<p class="text-emerald-600">Zero unsupported claims detected.</p>`}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    async function submitHumanReview() {
+      if (!currentReportId) {
+        alert("Please generate a report first.");
+        return;
+      }
+
+      const reviewer = document.getElementById("reviewerName").value;
+      const decision = document.getElementById("reviewDecisionSelect").value;
+      const notes = document.getElementById("reviewerNotes").value;
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/review`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            decision: decision,
+            reviewer_name: reviewer,
+            notes: notes
+          })
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+
+        // Refresh markdown
+        const mdRes = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/markdown`);
+        currentMarkdown = await mdRes.text();
+        document.getElementById("reportRenderedContent").innerHTML = marked.parse(currentMarkdown);
+        document.getElementById("rawMarkdownContent").innerText = currentMarkdown;
+
+        const badge = document.getElementById("statusBadge");
+        badge.innerText = data.new_status;
+        if (data.new_status === "HUMAN_APPROVED") {
+          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200";
+        } else if (data.new_status === "NEEDS_REVISION") {
+          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200";
+        } else {
+          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200";
+        }
+
+        alert(`Human review recorded on Render backend: ${data.new_status}`);
+      } catch (err) {
+        alert("Review sign-off error: " + err.message);
+      }
+    }
+
+    function switchTab(tabId) {
+      document.getElementById("tabReport").classList.add("hidden");
+      document.getElementById("tabAudit").classList.add("hidden");
+      document.getElementById("tabRaw").classList.add("hidden");
+
+      document.getElementById("tabBtnReport").className = "py-3 text-slate-500 hover:text-slate-800";
+      document.getElementById("tabBtnAudit").className = "py-3 text-slate-500 hover:text-slate-800";
+      document.getElementById("tabBtnRaw").className = "py-3 text-slate-500 hover:text-slate-800";
+
+      if (tabId === "reportView") {
+        document.getElementById("tabReport").classList.remove("hidden");
+        document.getElementById("tabBtnReport").className = "py-3 text-teal-700 border-b-2 border-teal-600";
+      } else if (tabId === "auditView") {
+        document.getElementById("tabAudit").classList.remove("hidden");
+        document.getElementById("tabBtnAudit").className = "py-3 text-teal-700 border-b-2 border-teal-600";
+      } else {
+        document.getElementById("tabRaw").classList.remove("hidden");
+        document.getElementById("tabBtnRaw").className = "py-3 text-teal-700 border-b-2 border-teal-600";
+      }
+    }
+
+    function downloadMarkdown() {
+      if (!currentReportId) return;
+      window.location.href = `${BACKEND_URL}/api/reports/${currentReportId}/download`;
+    }
+
+    function downloadJsonAudit() {
+      if (!currentReportData) return;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentReportData, null, 2));
+      const dlAnchor = document.createElement("a");
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `${currentReportId}_audit.json`);
+      dlAnchor.click();
+    }
+
+    function copyRawMarkdown() {
+      navigator.clipboard.writeText(currentMarkdown);
+      alert("Raw markdown copied to clipboard.");
+    }
+  </script>
+</body>
+</html>

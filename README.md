@@ -1,37 +1,60 @@
-# GenAR PADER Regulatory Report Generation Engine
+# PharmaVigil — Regulatory Intelligence & Automated PADER Engine
 
-[![Tests](https://img.shields.io/badge/Tests-120%2F120%20Passing-brightgreen.svg)](https://github.com/ameydongre10/submission)
+[![Tests](https://img.shields.io/badge/Tests-120%2F120%20Passing-brightgreen.svg)](https://github.com/ameydongre10/PharmaVigil)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Dashboard-blue.svg)](https://ameydongre10.github.io/PharmaVigil/)
 [![Render Backend](https://img.shields.io/badge/Render-Backend%20Live-brightgreen.svg)](https://pader-regulatory-engine.onrender.com)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Frontend%20Live-blue.svg)](https://ameydongre10.github.io/submission/)
+[![Swagger Docs](https://img.shields.io/badge/API-OpenAPI%20%2F%20Swagger-009688.svg)](https://pader-regulatory-engine.onrender.com/docs)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![Regulatory Standard](https://img.shields.io/badge/FDA-21%20CFR%20314.80-red.svg)](https://www.accessdata.fda.gov/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An enterprise-grade, deterministic, and hallucination-free regulatory report generation system for **Periodic Adverse Drug Experience Reports (PADER)** under **FDA 21 CFR § 314.80**.
+**PharmaVigil** is an enterprise-grade, deterministic, and hallucination-free regulatory report generation system for **Periodic Adverse Drug Experience Reports (PADER)** in compliance with **FDA 21 CFR § 314.80**.
 
-### 🔗 Live Deployments
-- 🌐 **Frontend (GitHub Pages)**: [https://ameydongre10.github.io/submission/](https://ameydongre10.github.io/submission/)
-- ⚙️ **Backend API (Render)**: [https://pader-regulatory-engine.onrender.com](https://pader-regulatory-engine.onrender.com)
-- 📖 **Interactive API Documentation (Swagger)**: [https://pader-regulatory-engine.onrender.com/docs](https://pader-regulatory-engine.onrender.com/docs)
-- 🩺 **Health Check**: [https://pader-regulatory-engine.onrender.com/api/health](https://pader-regulatory-engine.onrender.com/api/health)
+It bridges raw pharmacovigilance line-listings (ICSRs) with audit-ready regulatory submissions by combining mathematical aggregation, strict context boundary isolation, grounded LLM narrative generation, automated number-level verification, and an auditable human medical reviewer sign-off workflow.
 
-Combines rigorous mathematical aggregation, strict context boundary isolation, grounded LLM narrative generation, automated number-level verification, and an auditable human review sign-off workflow.
+---
+
+## 🌐 Live Deployments
+
+| Component | Live Link | Description |
+|---|---|---|
+| **Web Dashboard** | [https://ameydongre10.github.io/PharmaVigil/](https://ameydongre10.github.io/PharmaVigil/) | Full Single-Page Application hosted on GitHub Pages |
+| **Backend REST API** | [https://pader-regulatory-engine.onrender.com](https://pader-regulatory-engine.onrender.com) | FastAPI production server hosted on Render |
+| **Interactive API Docs** | [https://pader-regulatory-engine.onrender.com/docs](https://pader-regulatory-engine.onrender.com/docs) | Interactive Swagger UI for testing all API endpoints |
+| **API Health Probe** | [https://pader-regulatory-engine.onrender.com/api/health](https://pader-regulatory-engine.onrender.com/api/health) | Uptime monitoring and healthcheck endpoint |
 
 ---
 
 ## 📑 Table of Contents
-1. [Key Architecture & Core Principles](#-key-architecture--core-principles)
-2. [Repository Structure](#-repository-structure)
-3. [Quick Start & Local Execution](#-quick-start--local-execution)
-4. [Web Dashboard & REST API](#-web-dashboard--rest-api)
-5. [Hosting & Deployment (Render / Docker)](#-hosting--deployment-render--docker)
-6. [Regulatory Compliance & Non-Negotiable Rules](#-regulatory-compliance--non-negotiable-rules)
-7. [Running the Test Suite](#-running-the-test-suite)
+1. [The Problem & PharmaVigil Solution](#-the-problem--pharmavigil-solution)
+2. [Key Architecture & Data Flow](#-key-architecture--data-flow)
+3. [Safety Guarantees & Regulatory Rules](#-safety-guarantees--regulatory-rules)
+4. [Repository Structure](#-repository-structure)
+5. [Quick Start & Local Execution](#-quick-start--local-execution)
+6. [Web Dashboard & REST API](#-web-dashboard--rest-api)
+7. [Deployment Guide (Render & GitHub Pages)](#-deployment-guide-render--github-pages)
+8. [Test Suite Verification (120 Tests)](#-test-suite-verification-120-tests)
 
 ---
 
-## 🏛 Key Architecture & Core Principles
+## 🎯 The Problem & PharmaVigil Solution
+
+### The Challenge with Generic LLMs in Pharma
+Under FDA 21 CFR § 314.80, pharmaceutical sponsors must submit Periodic Adverse Drug Experience Reports detailing safety data, expedited 15-day alerts, and adverse reaction trends. Naive generative AI solutions fail in this domain because:
+* **Numeric Hallucinations:** LLMs regularly miscalculate percentages, transpose case counts, or round critical patient safety metrics inaccurately.
+* **Causality Invention:** Models frequently jump to ungrounded conclusions about drug causality or invent non-existent safety signals.
+* **Lack of Audit Trail:** Traditional chatbots cannot prove where a specific number in a paragraph originated.
+
+### PharmaVigil's Grounded Approach
+* **Deterministic Analysis Layer:** All mathematics, sums, percentages, and date filters are executed by deterministic code before any LLM is called.
+* **Context Boundary Isolation:** Raw DataFrames are *never* injected into LLM prompts. Only targeted, pre-computed `EvidenceItem` packets with explicit IDs are passed.
+* **Automated Number Extraction Audit:** Every number generated by the LLM in the narrative text is extracted via regex and verified against approved evidence. If even one figure is unsupported, the section is flagged.
+* **Human Medical Sign-Off:** Automated evaluation `PASS` does **not** equal submission approval. Reports default to `DRAFT_PENDING_REVIEW` until an authorized medical officer signs off.
+
+---
+
+## 🏛 Key Architecture & Data Flow
 
 ```
                                       ┌─────────────────────────────────────┐
@@ -82,29 +105,48 @@ Combines rigorous mathematical aggregation, strict context boundary isolation, g
                                       └─────────────────────────────────────┘
 ```
 
-### Core Safety Guarantees:
-1. **Zero Hallucinated Math**: The LLM *never* performs calculations or statistics. Every sum, count, percentage, and period date is computed deterministically in `src/analysis_engine.py`.
-2. **Strict Context Boundaries**: Raw tabular lines/DataFrames are *never* dumped into LLM prompts. Only targeted, pre-computed `EvidenceItem` packets with explicit IDs are passed.
-3. **Automated Number-Level Audit**: Every single number generated in narrative text is extracted via regex and verified against the evidence pool. Unsupported figures fail validation.
-4. **Mandatory Human Sign-Off**: Automated validation `PASS` does **not** equal submission approval. Reports default to `DRAFT_PENDING_REVIEW`. Only an explicit human medical reviewer sign-off action can mark a report `HUMAN_APPROVED`.
-5. **Clear Separation of In-Scope vs Limitations**: FDA regulatory requirements (8 core sections) are cleanly separated from data limitations (e.g., Expectedness / CCDS label absence).
+---
+
+## 🛡 Safety Guarantees & Regulatory Rules
+
+PharmaVigil enforces strict non-negotiable regulatory rules across the entire lifecycle:
+
+| Rule | Enforcement Location | Description |
+|---|---|---|
+| **Rule A** | `src/orchestrator.py` | Newly generated reports must start as `DRAFT_PENDING_REVIEW`. |
+| **Rule B** | `src/evaluator.py` | Automated evaluator `PASS` does **not** change review status to `HUMAN_APPROVED`. |
+| **Rule C** | `src/human_review.py` | Only an explicit human action with reviewer credentials can set `HUMAN_APPROVED`. |
+| **Rule D & E** | `src/human_review.py` | Reviewer can set `NEEDS_REVISION` or `REJECTED` with timestamped notes. |
+| **Rule F** | `src/human_review.py` | Simulated approvals are tagged `is_simulated: true` and cannot masquerade as real medical review. |
+| **Rule G & H** | `src/evaluator.py` | Checks completeness of all 8 mandatory PADER sections and tracks missing product labels (Expectedness) as separate limitation notices. |
 
 ---
 
 ## 📂 Repository Structure
 
 ```
-submission/
-├── app.py                      # FastAPI Web Application & Interactive Dashboard
+PharmaVigil/
+├── app.py                      # FastAPI Web Application & Interactive Backend
+├── index.html                  # Root static dashboard (for GitHub Pages root mode)
 ├── run_pader.py                # Command Line Interface (CLI) Pipeline runner
 ├── demo_phase3.py              # Phase 3 Evidence & Context engineering demo
 ├── demo_phase4.py              # Phase 4 Grounded LLM Generation demo
 ├── requirements.txt            # Production dependencies
 ├── render.yaml                 # Render Blueprint for 1-click cloud deployment
-├── Dockerfile                  # Container definition for Docker & Cloud Run
+├── Dockerfile                  # Production multi-stage Docker container
 ├── Procfile                    # Web service process configuration
 ├── pytest.ini                  # Pytest configuration (pythonpath = .)
-├── .env.example                # Example environment variables
+├── .env.example                # Example environment configuration
+│
+├── docs/                       # GitHub Pages Deployment & Documentation
+│   ├── index.html              # GitHub Pages frontend application (connects to Render)
+│   ├── .nojekyll               # Disables Jekyll processing on GitHub Pages
+│   ├── DEPLOYMENT_GUIDE.md     # Detailed Render & Docker hosting guide
+│   └── version1_design.md      # Engineering architecture specification
+│
+├── .github/
+│   └── workflows/
+│       └── pages.yml           # Automated GitHub Pages CI/CD workflow
 │
 ├── src/                        # Core Engine Package
 │   ├── __init__.py
@@ -138,12 +180,8 @@ submission/
 │   ├── sample_icsr_dataset.xlsx# 1,068-row reference dataset (Excel)
 │   └── sample_icsr_dataset.csv # 1,068-row reference dataset (CSV)
 │
-├── scripts/
-│   └── generate_sample_data.py # Reference dataset generator
-│
-└── docs/
-    ├── DEPLOYMENT_GUIDE.md     # Detailed Render & Docker hosting guide
-    └── version1_design.md      # Engineering architecture specification
+└── scripts/
+    └── generate_sample_data.py # Reference dataset generator
 ```
 
 ---
@@ -153,8 +191,8 @@ submission/
 ### 1. Clone & Set Up Environment
 
 ```bash
-git clone https://github.com/ameydongre10/submission.git
-cd submission
+git clone https://github.com/ameydongre10/PharmaVigil.git
+cd PharmaVigil
 
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .\.venv\Scripts\activate
@@ -168,11 +206,11 @@ pip install -r requirements.txt
 # Generate a draft report with offline Mock LLM (100% grounded)
 python run_pader.py --mock --output-dir outputs
 
-# Inspect generated report:
-cat outputs/pader_report.md
+# Perform explicit medical reviewer sign-off
+python run_pader.py --sign-off APPROVED --reviewer "Dr. J. Doe, MD" --notes "Verified all MedDRA tables."
 ```
 
-### 3. Launch Web Dashboard & REST API
+### 3. Launch Web Dashboard & REST API Locally
 
 ```bash
 python app.py
@@ -180,22 +218,21 @@ python app.py
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Open your browser to:
-- **Interactive Web Dashboard**: `http://localhost:8000`
-- **Swagger API Documentation**: `http://localhost:8000/docs`
-- **ReDoc Technical Reference**: `http://localhost:8000/redoc`
+Open:
+- **Local Dashboard:** `http://localhost:8000`
+- **Swagger API Docs:** `http://localhost:8000/docs`
 
 ---
 
 ## 🌐 Web Dashboard & REST API
 
-The application serves a complete, responsive Regulatory Pharmacovigilance Dashboard:
-- **1-Click Reference Dataset**: Analyze the bundled 1,068-row Bisoprolol dataset instantly without uploading files.
-- **Drag-and-Drop Ingestion**: Upload custom `.xlsx` or `.csv` files with automatic validation.
-- **Live LLM Switcher**: Toggle between offline deterministic mock and live API keys (OpenAI, Gemini, Anthropic).
-- **Compliance & Grounding Metrics**: Displays factual consistency %, grounding score %, and unsupported claim counts.
-- **Regulatory Reviewer Console**: Authorized safety officers can review and sign off (`APPROVED`, `NEEDS_REVISION`, `REJECTED`) with timestamped audit records.
-- **Export Formats**: One-click download of the complete Markdown document (`.md`) or structured JSON audit payload.
+The application serves an intuitive, single-page regulatory dashboard:
+- **1-Click Reference Dataset:** Immediately analyze the bundled 1,068-row Bisoprolol dataset without uploading files.
+- **Drag-and-Drop Ingestion:** Upload custom `.xlsx` or `.csv` files with automatic schema validation.
+- **Multi-Provider LLM Switcher:** Toggle between offline deterministic mock and live API keys (OpenAI, Gemini, Anthropic).
+- **Compliance & Grounding Metrics:** Real-time factual consistency %, grounding score %, and unsupported claim counts.
+- **Medical Reviewer Station:** Authorized safety officers can review and sign off (`APPROVED`, `NEEDS_REVISION`, `REJECTED`) with timestamped audit records.
+- **Export Formats:** One-click download of the complete Markdown document (`.md`) or structured JSON audit payload.
 
 ### Core API Endpoints
 
@@ -213,36 +250,26 @@ The application serves a complete, responsive Regulatory Pharmacovigilance Dashb
 
 ---
 
-## 🚀 Hosting & Deployment (Render / Docker)
+## 🚀 Deployment Guide (Render & GitHub Pages)
 
-### Deploy on Render in 2 Minutes:
-1. Fork or push this repository to GitHub.
-2. Go to [Render Dashboard](https://dashboard.render.com/) -> **New +** -> **Blueprint**.
-3. Select your repository. Render automatically reads `render.yaml`.
-4. Click **Apply**. Render will install requirements, configure health checks, and publish your live URL!
+### Render (Backend API)
+The backend runs automatically on Render using [`render.yaml`](render.yaml):
+- **Service Name:** `pader-regulatory-engine`
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn app:app --host 0.0.0.0 --port $PORT`
+- **Health Check Path:** `/api/health`
 
-For detailed instructions and Docker/Cloud Run commands, see [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).
-
----
-
-## 🛡 Regulatory Compliance & Non-Negotiable Rules
-
-The pipeline enforces regulatory rules throughout:
-
-| Rule | Enforcement Location | Description |
-|---|---|---|
-| **Rule A** | `src/orchestrator.py` | Newly generated reports must default to `DRAFT_PENDING_REVIEW`. |
-| **Rule B** | `src/evaluator.py` | Automated evaluator `PASS` does **not** change review status to `HUMAN_APPROVED`. |
-| **Rule C** | `src/human_review.py` | Only an explicit, audited human action can set `HUMAN_APPROVED`. |
-| **Rule D & E** | `src/human_review.py` | Reviewer can set `NEEDS_REVISION` or `REJECTED`. |
-| **Rule F** | `src/human_review.py` | Simulated test approvals are marked `is_simulated: true` and cannot masquerade as real medical review. |
-| **Rule G & H** | `src/evaluator.py` | Validates completeness across all 8 mandatory PADER sections and tracks limitations separately. |
+### GitHub Pages (Frontend UI)
+The static frontend is hosted on GitHub Pages:
+- **URL:** [https://ameydongre10.github.io/PharmaVigil/](https://ameydongre10.github.io/PharmaVigil/)
+- **Source:** `docs/` folder on branch `main` (with automatic deployment via `.github/workflows/pages.yml`).
+- **Connection:** Automatically connects to the Render backend at `https://pader-regulatory-engine.onrender.com`.
 
 ---
 
-## 🧪 Running the Test Suite
+## 🧪 Test Suite Verification (120 Tests)
 
-The test suite covers deterministic analysis, grounding verification, hardening edge cases, regression benchmarks, and REST API behavior:
+PharmaVigil is backed by an exhaustive test suite covering data ingestion, deterministic analysis, context isolation, grounding validation, hardening edge cases, regression benchmarks, and REST API behavior:
 
 ```bash
 pytest
@@ -250,14 +277,21 @@ pytest
 
 **Output:**
 ```
+============================= test session starts =============================
+platform win32 -- Python 3.11.0, pytest-8.3.2, pluggy-1.6.0
+rootdir: C:\Users\ameyd\.gemini\antigravity\scratch\submission
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
 collected 120 items
-tests/test_analysis.py .........                                         [  7%]
-tests/test_api.py .....                                                  [ 11%]
-tests/test_evidence.py .....................                             [ 29%]
-tests/test_generation.py ..........                                      [ 37%]
-tests/test_hardening.py ................................................ [ 77%]
+
+tests\test_analysis.py .........                                         [  7%]
+tests\test_api.py .....                                                  [ 11%]
+tests\test_evidence.py .....................                             [ 29%]
+tests\test_generation.py ..........                                      [ 37%]
+tests\test_hardening.py ................................................ [ 77%]
 ..................                                                       [ 92%]
-tests/test_pipeline.py .........                                         [100%]
+tests\test_pipeline.py .........                                         [100%]
 
 ======================= 120 passed in 5.35s =======================
 ```

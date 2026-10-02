@@ -108,7 +108,7 @@ def get_active_dataset_path(preferred_path: Optional[str] = None) -> str:
     raise HTTPException(status_code=404, detail="No ICSR dataset available. Please upload a dataset.")
 
 
-@app.get("/api/health", tags=["System"])
+@app.api_route("/api/health", methods=["GET", "HEAD"], tags=["System"])
 def health_check():
     """Health check endpoint for Render / cloud load balancers."""
     return {
@@ -334,7 +334,7 @@ def review_report(report_id: str, req: ReviewRequest):
 # INTERACTIVE REGULATORY DASHBOARD UI (HTML + Tailwind CSS + Lucide Icons)
 # ===========================================================================
 
-@app.get("/", response_class=HTMLResponse, tags=["Dashboard"])
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse, tags=["Dashboard"])
 def serve_dashboard():
     """Serves a modern, self-contained regulatory PADER dashboard."""
     return """<!DOCTYPE html>

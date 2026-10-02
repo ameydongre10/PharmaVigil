@@ -1,12 +1,20 @@
 # GenAR PADER Regulatory Report Generation Engine
 
 [![Tests](https://img.shields.io/badge/Tests-120%2F120%20Passing-brightgreen.svg)](https://github.com/ameydongre10/submission)
+[![Render Backend](https://img.shields.io/badge/Render-Backend%20Live-brightgreen.svg)](https://pader-regulatory-engine.onrender.com)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Frontend%20Live-blue.svg)](https://ameydongre10.github.io/submission/)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![Regulatory Standard](https://img.shields.io/badge/FDA-21%20CFR%20314.80-red.svg)](https://www.accessdata.fda.gov/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An enterprise-grade, deterministic, and hallucination-free regulatory report generation system for **Periodic Adverse Drug Experience Reports (PADER)** under **FDA 21 CFR § 314.80**.
+
+### 🔗 Live Deployments
+- 🌐 **Frontend (GitHub Pages)**: [https://ameydongre10.github.io/submission/](https://ameydongre10.github.io/submission/)
+- ⚙️ **Backend API (Render)**: [https://pader-regulatory-engine.onrender.com](https://pader-regulatory-engine.onrender.com)
+- 📖 **Interactive API Documentation (Swagger)**: [https://pader-regulatory-engine.onrender.com/docs](https://pader-regulatory-engine.onrender.com/docs)
+- 🩺 **Health Check**: [https://pader-regulatory-engine.onrender.com/api/health](https://pader-regulatory-engine.onrender.com/api/health)
 
 Combines rigorous mathematical aggregation, strict context boundary isolation, grounded LLM narrative generation, automated number-level verification, and an auditable human review sign-off workflow.
 

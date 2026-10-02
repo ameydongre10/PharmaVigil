@@ -1,0 +1,85 @@
+{
+  "report_id": "PADER-BISOPROLOL-2025-12-26",
+  "timestamp_utc": "2026-08-14T18:11:51.617205+00:00",
+  "total_sections": 9,
+  "required_sections_total": 8,
+  "required_sections_present": 8,
+  "required_sections_complete": true,
+  "additional_limitation_sections_present": [
+    "Expectedness"
+  ],
+  "generated_sections": 5,
+  "deterministic_sections": 4,
+  "passed_validation_sections": 9,
+  "failed_validation_sections": 0,
+  "factual_consistency_score": 100.0,
+  "grounding_score": 100.0,
+  "unsupported_claim_count": 0,
+  "automated_evaluation_status": "PASS",
+  "is_human_approved": false,
+  "section_details": {
+    "Reporting Period": {
+      "type": "deterministic",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 2,
+      "warnings": []
+    },
+    "Narrative Summary": {
+      "type": "llm_generated",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 11,
+      "warnings": []
+    },
+    "Summary Analysis of Cases": {
+      "type": "llm_generated",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 9,
+      "warnings": []
+    },
+    "Reaction Analysis": {
+      "type": "llm_generated",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 3,
+      "warnings": []
+    },
+    "15-Day Alert Reports": {
+      "type": "llm_generated",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 7,
+      "warnings": []
+    },
+    "Trends and Important Observations": {
+      "type": "llm_generated",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 6,
+      "warnings": []
+    },
+    "History of Actions": {
+      "type": "deterministic",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 1,
+      "warnings": []
+    },
+    "Expectedness": {
+      "type": "limitation_statement",
+      "is_required_by_assignment": false,
+      "status": "PASS",
+      "evidence_ids_count": 1,
+      "warnings": []
+    },
+    "Case Listing": {
+      "type": "deterministic",
+      "is_required_by_assignment": true,
+      "status": "PASS",
+      "evidence_ids_count": 1,
+      "warnings": []
+    }
+  }
+}

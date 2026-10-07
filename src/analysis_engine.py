@@ -1,25 +1,45 @@
-import pandas as pd
-from typing import Dict, Any, List
+﻿import pandas as pd
+from typing import Dict, Any, List, Optional
 from .models import AnalysisResult
+
 
 class AnalysisEngine:
     def __init__(self, df: pd.DataFrame):
         self.df = df
         
         # Build a case-level dataframe deduplicated by safetyreportid
-        # We take the max of boolean flags, and first available for demographics
         if 'safetyreportid' in df.columns:
-            self.cases_df = df.groupby('safetyreportid').agg({
+            agg_dict = {
                 'serious_bool': 'max',
                 'expedited_bool': 'max',
                 'numeric_age': 'first',
                 'patient_patientsex': 'first',
                 'standard_country': 'first',
                 'receivedate': 'first'
-            }).reset_index()
+            }
+            # Only aggregate columns present in df
+            agg_dict = {k: v for k, v in agg_dict.items() if k in df.columns}
+            self.cases_df = df.groupby('safetyreportid').agg(agg_dict).reset_index()
         else:
             self.cases_df = pd.DataFrame()
-            
+
+    @staticmethod
+    def parse_dates(series: pd.Series) -> pd.Series:
+        """Robustly parses date series, supporting FAERS integer YYYYMMDD, ISO YYYY-MM-DD, or Excel dates."""
+        if series.empty:
+            return pd.Series(dtype='datetime64[ns]')
+        s_clean = series.astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
+        # 1. Try FAERS format %Y%m%d (e.g. 20230512)
+        parsed_ymd = pd.to_datetime(s_clean, format='%Y%m%d', errors='coerce')
+        valid_inputs = s_clean.replace(['nan', 'None', '', 'NaT'], None).dropna()
+        if len(valid_inputs) > 0 and parsed_ymd.notna().sum() >= len(valid_inputs) * 0.5:
+            return parsed_ymd
+        # 2. Try general parser
+        parsed_gen = pd.to_datetime(series, errors='coerce')
+        if parsed_gen.notna().sum() > 0:
+            return parsed_gen
+        return parsed_ymd
+
     def get_reporting_period(self) -> AnalysisResult:
         if self.cases_df.empty or 'receivedate' not in self.cases_df.columns:
             return AnalysisResult(
@@ -31,7 +51,7 @@ class AnalysisEngine:
                 case_level=True,
                 source_fields=["receivedate"]
             )
-        dates = pd.to_datetime(self.cases_df['receivedate'], format='%Y%m%d', errors='coerce')
+        dates = self.parse_dates(self.cases_df['receivedate'])
         min_date = dates.min()
         max_date = dates.max()
         return AnalysisResult(
@@ -58,7 +78,7 @@ class AnalysisEngine:
                 source_fields=["safetyreportid", "serious"]
             )
         total = len(self.cases_df)
-        serious = int(self.cases_df['serious_bool'].sum())
+        serious = int(self.cases_df['serious_bool'].sum()) if 'serious_bool' in self.cases_df.columns else 0
         non_serious = total - serious
         return AnalysisResult(
             analysis_id="vol_001",
@@ -79,16 +99,26 @@ class AnalysisEngine:
     def get_age_distribution(self) -> AnalysisResult:
         def bucket_age(age):
             if pd.isnull(age): return "Unknown"
-            # Reject biologically impossible or invalid ages
             if age < 0 or age > 150: return "Unknown"
             if age < 18: return "<18"
             if age < 65: return "18-64"
             return "65+"
 
+        if 'numeric_age' not in self.cases_df.columns:
+            return AnalysisResult(
+                analysis_id="demo_age_001",
+                analysis_name="Age Distribution",
+                metric="Counts and Percentages",
+                value={"counts": {"Unknown": len(self.cases_df)}, "percentages": {"Unknown": 100.0}},
+                methodology="Bucket numeric_age field into <18, 18-64, 65+, Unknown",
+                case_level=True,
+                source_fields=["patient_patientonsetage"]
+            )
+
         ages = self.cases_df['numeric_age'].apply(bucket_age)
         counts = ages.value_counts().to_dict()
         total = len(self.cases_df)
-        pcts = {k: round((v/total)*100, 2) for k, v in counts.items()}
+        pcts = {k: round((v/total)*100, 2) for k, v in counts.items()} if total > 0 else {}
         
         return AnalysisResult(
             analysis_id="demo_age_001",
@@ -101,10 +131,21 @@ class AnalysisEngine:
         )
 
     def get_sex_distribution(self) -> AnalysisResult:
+        if 'patient_patientsex' not in self.cases_df.columns:
+            return AnalysisResult(
+                analysis_id="demo_sex_001",
+                analysis_name="Sex Distribution",
+                metric="Counts and Percentages",
+                value={"counts": {"Unknown": len(self.cases_df)}, "percentages": {"Unknown": 100.0}},
+                methodology="Case-level count of patient_patientsex",
+                case_level=True,
+                source_fields=["patient_patientsex"]
+            )
+
         sex = self.cases_df['patient_patientsex'].fillna("Unknown").astype(str).str.title()
         counts = sex.value_counts().to_dict()
         total = len(self.cases_df)
-        pcts = {k: round((v/total)*100, 2) for k, v in counts.items()}
+        pcts = {k: round((v/total)*100, 2) for k, v in counts.items()} if total > 0 else {}
         
         return AnalysisResult(
             analysis_id="demo_sex_001",
@@ -117,9 +158,20 @@ class AnalysisEngine:
         )
 
     def get_country_distribution(self) -> AnalysisResult:
+        if 'standard_country' not in self.cases_df.columns:
+            return AnalysisResult(
+                analysis_id="demo_country_001",
+                analysis_name="Country Distribution",
+                metric="Counts and Percentages",
+                value={"counts": {"UNKNOWN": len(self.cases_df)}, "percentages": {"UNKNOWN": 100.0}},
+                methodology="Case-level count of occurcountry",
+                case_level=True,
+                source_fields=["occurcountry"]
+            )
+
         counts = self.cases_df['standard_country'].value_counts().to_dict()
         total = len(self.cases_df)
-        pcts = {k: round((v/total)*100, 2) for k, v in counts.items()}
+        pcts = {k: round((v/total)*100, 2) for k, v in counts.items()} if total > 0 else {}
         
         return AnalysisResult(
             analysis_id="demo_country_001",
@@ -131,10 +183,9 @@ class AnalysisEngine:
             source_fields=["occurcountry", "primarysource_reportercountry"]
         )
         
-    def get_reactions(self, top_n: int = 20) -> AnalysisResult:
+    def get_reactions(self, top_n: int = 20) -> Optional[AnalysisResult]:
         if 'patient_reaction_reactionmeddrapt' not in self.df.columns:
             return None
-        # deduplicate by case and reaction to avoid overcounting multiple same reactions per case
         rx_df = self.df[['safetyreportid', 'patient_reaction_reactionmeddrapt']].drop_duplicates()
         counts = rx_df['patient_reaction_reactionmeddrapt'].value_counts().head(top_n).to_dict()
         
@@ -148,7 +199,7 @@ class AnalysisEngine:
             source_fields=["patient_reaction_reactionmeddrapt"]
         )
 
-    def get_serious_reactions(self, top_n: int = 20) -> AnalysisResult:
+    def get_serious_reactions(self, top_n: int = 20) -> Optional[AnalysisResult]:
         if 'patient_reaction_reactionmeddrapt' not in self.df.columns:
             return None
             
@@ -167,10 +218,9 @@ class AnalysisEngine:
             source_fields=["patient_reaction_reactionmeddrapt", "serious"]
         )
         
-    def get_outcomes(self) -> AnalysisResult:
+    def get_outcomes(self) -> Optional[AnalysisResult]:
         if 'patient_reaction_reactionoutcome' not in self.df.columns:
             return None
-        # Outcome is often reaction-level in FAERS
         counts = self.df['patient_reaction_reactionoutcome'].fillna("Unknown").value_counts().to_dict()
         
         return AnalysisResult(
@@ -184,9 +234,24 @@ class AnalysisEngine:
         )
 
     def get_time_trends(self) -> AnalysisResult:
-        dates = pd.to_datetime(self.cases_df['receivedate'], format='%Y%m%d', errors='coerce')
-        months = dates.dt.to_period('M').astype(str)
-        counts = months.value_counts().sort_index().to_dict()
+        if self.cases_df.empty or 'receivedate' not in self.cases_df.columns:
+            return AnalysisResult(
+                analysis_id="trend_001",
+                analysis_name="Monthly Case Volume",
+                metric="Counts per Month",
+                value={},
+                methodology="Group cases by receivedate month",
+                case_level=True,
+                source_fields=["receivedate"]
+            )
+
+        dates = self.parse_dates(self.cases_df['receivedate'])
+        valid_dates = dates.dropna()
+        if not valid_dates.empty:
+            months = valid_dates.dt.to_period('M').astype(str)
+            counts = months.value_counts().sort_index().to_dict()
+        else:
+            counts = {}
         
         return AnalysisResult(
             analysis_id="trend_001",
@@ -199,8 +264,11 @@ class AnalysisEngine:
         )
 
     def get_alert_cases(self) -> AnalysisResult:
-        total_alerts = int(self.cases_df['expedited_bool'].sum())
-        serious_alerts = int(self.cases_df[(self.cases_df['expedited_bool'] == True) & (self.cases_df['serious_bool'] == True)].shape[0])
+        total_alerts = int(self.cases_df['expedited_bool'].sum()) if 'expedited_bool' in self.cases_df.columns else 0
+        if 'expedited_bool' in self.cases_df.columns and 'serious_bool' in self.cases_df.columns:
+            serious_alerts = int(self.cases_df[(self.cases_df['expedited_bool'] == True) & (self.cases_df['serious_bool'] == True)].shape[0])
+        else:
+            serious_alerts = 0
         
         return AnalysisResult(
             analysis_id="alert_001",
@@ -235,7 +303,6 @@ class AnalysisEngine:
         )
         
     def get_case_index(self, limit: int = 100) -> AnalysisResult:
-        # Create a simple listing 
         listing = []
         for _, case in self.cases_df.head(limit).iterrows():
             cid = case['safetyreportid']
@@ -244,19 +311,22 @@ class AnalysisEngine:
                 rx = self.df[self.df['safetyreportid'] == cid][rx_col].dropna().unique().tolist()
             else:
                 rx = []
-            # Format date safely
-            raw_date = case['receivedate']
+            raw_date = case.get('receivedate', '')
             try:
-                formatted_date = pd.to_datetime(str(raw_date), format='%Y%m%d', errors='coerce')
-                date_str = formatted_date.strftime('%Y-%m-%d') if pd.notnull(formatted_date) else str(raw_date)
+                parsed = self.parse_dates(pd.Series([raw_date]))
+                if not parsed.isna().iloc[0]:
+                    date_str = parsed.iloc[0].strftime('%Y-%m-%d')
+                else:
+                    date_str = str(raw_date)
             except Exception:
                 date_str = str(raw_date)
+
             listing.append({
                 "safetyreportid": str(cid),
                 "reactions": ", ".join(str(r) for r in rx) if rx else "Unknown",
-                "serious": "Yes" if case['serious_bool'] else "No",
+                "serious": "Yes" if case.get('serious_bool', False) else "No",
                 "date": date_str,
-                "country": str(case['standard_country'])
+                "country": str(case.get('standard_country', 'UNKNOWN'))
             })
             
         return AnalysisResult(

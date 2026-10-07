@@ -1,5 +1,5 @@
-"""
-Report Assembler — combines deterministic tables, LLM narratives, evidence metadata, and review status into Markdown.
+﻿"""
+Report Assembler ?" combines deterministic tables, LLM narratives, evidence metadata, and review status into Markdown.
 """
 
 from typing import List, Dict, Any, Optional
@@ -192,7 +192,7 @@ class ReportAssembler:
 
             # Review / Validation Flag Badge
             if sec.validation_status != SectionStatus.PASS:
-                md.append(f"> ⚠️ **Validation Alert:** `{sec.validation_status.value}` — Review Required")
+                md.append(f"> **Validation Alert:** `{sec.validation_status.value}` - Review Required")
                 for w in sec.validation_warnings:
                     md.append(f"> - {w}")
                 md.append("\n")
@@ -320,12 +320,22 @@ class ReportAssembler:
         if report.review_record:
             rec = report.review_record
             sim_notice = " *(Simulated Automated Test Fixture)*" if rec.is_simulated else ""
-            md.append("## Human Review Sign-Off")
-            md.append(f"- **Reviewer:** {rec.reviewer_name}{sim_notice}")
+            md.append("## Human Review & Medical Verification Sign-Off")
+            md.append(f"- **Reviewer / Medical Officer:** {rec.reviewer_name}{sim_notice}")
+            if rec.doctor_license:
+                md.append(f"- **Medical Registration / License:** `{rec.doctor_license}`")
+            if rec.specialty:
+                md.append(f"- **Clinical Specialty:** {rec.specialty}")
+            if rec.affiliation:
+                md.append(f"- **Affiliation / Institution:** {rec.affiliation}")
             md.append(f"- **Decision:** `{rec.reviewer_decision.value}`")
-            md.append(f"- **Reviewed (UTC):** {rec.reviewed_at_utc}")
+            md.append(f"- **Verification Timestamp (UTC):** {rec.reviewed_at_utc}")
+            if rec.verification_id:
+                md.append(f"- **Audit Verification ID:** `{rec.verification_id}`")
+            if rec.signature_hash:
+                md.append(f"- **Cryptographic Verification Signature:** `{rec.signature_hash}`")
             if rec.reviewer_notes:
-                md.append(f"- **Notes:** {rec.reviewer_notes}")
+                md.append(f"- **Clinical Review Notes:** {rec.reviewer_notes}")
             md.append("\n---\n")
 
         return "\n".join(md)

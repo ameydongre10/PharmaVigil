@@ -1,10 +1,12 @@
-"""
-PADER Pipeline Orchestrator — coordinates data loading, deterministic analysis, evidence collection,
+﻿"""
+PADER Pipeline Orchestrator ?" coordinates data loading, deterministic analysis, evidence collection,
 grounded LLM generation, report assembly, evaluation, and human review sign-off.
 """
 
 import os
 import json
+import re
+from pathlib import Path
 from typing import Optional, Dict
 from .data_loader import load_and_normalize_data, validate_data
 from .analysis_engine import AnalysisEngine
@@ -45,7 +47,12 @@ class PADEROrchestrator:
         review_decision: ReviewDecision = ReviewDecision.PENDING_REVIEW,
         reviewer_name: str = "Qualified Safety Reviewer",
         reviewer_notes: Optional[str] = None,
-        is_simulated_review: bool = False
+        is_simulated_review: bool = False,
+        doctor_license: Optional[str] = None,
+        specialty: Optional[str] = None,
+        affiliation: Optional[str] = None,
+        verification_id: Optional[str] = None,
+        signature_hash: Optional[str] = None
     ) -> PADERReport:
         # 1. Data Ingestion & Normalization
         df = load_and_normalize_data(file_path)
@@ -53,15 +60,50 @@ class PADEROrchestrator:
 
         # 2. Deterministic Analysis Layer (Phase 2)
         engine = AnalysisEngine(df)
+        rx_res = engine.get_reactions(top_n=20)
+        rx_serious_res = engine.get_serious_reactions(top_n=20)
+        out_res = engine.get_outcomes()
+
+        if rx_res is None:
+            rx_res = AnalysisResult(
+                analysis_id="rx_001",
+                analysis_name="Top Reactions",
+                metric="Top 20 Counts",
+                value={},
+                methodology="Count of unique PTs per case",
+                case_level=False,
+                source_fields=["patient_reaction_reactionmeddrapt"]
+            )
+        if rx_serious_res is None:
+            rx_serious_res = AnalysisResult(
+                analysis_id="rx_002",
+                analysis_name="Top Serious Reactions",
+                metric="Top 20 Counts in Serious Cases",
+                value={},
+                methodology="Count of unique PTs per serious case",
+                case_level=False,
+                source_fields=["patient_reaction_reactionmeddrapt", "serious"]
+            )
+        if out_res is None:
+            out_res = AnalysisResult(
+                analysis_id="out_001",
+                analysis_name="Reaction Outcomes",
+                metric="Counts",
+                value={"Unknown": len(df)},
+                methodology="Row-level count of reaction outcomes",
+                case_level=False,
+                source_fields=[]
+            )
+
         analyses: Dict[str, AnalysisResult] = {
             "period_001": engine.get_reporting_period(),
             "vol_001": engine.get_case_volume(),
             "demo_age_001": engine.get_age_distribution(),
             "demo_sex_001": engine.get_sex_distribution(),
             "demo_country_001": engine.get_country_distribution(),
-            "rx_001": engine.get_reactions(top_n=20),
-            "rx_002": engine.get_serious_reactions(top_n=20),
-            "out_001": engine.get_outcomes(),
+            "rx_001": rx_res,
+            "rx_002": rx_serious_res,
+            "out_001": out_res,
             "trend_001": engine.get_time_trends(),
             "alert_001": engine.get_alert_cases(),
             "hist_001": engine.get_history_of_actions(),
@@ -114,7 +156,7 @@ class PADEROrchestrator:
                     from .generation_models import GeneratedSection, ValidationResult
                     generated_sections[pkt.section_name] = GeneratedSection(
                         section_name=pkt.section_name,
-                        narrative=f"[GENERATION FAILED — Section requires manual review. Error: {type(exc).__name__}]",
+                        narrative=f"[GENERATION FAILED - Section requires manual review. Error: {type(exc).__name__}]",
                         evidence_ids=[e.evidence_id for e in pkt.evidence],
                         limitations=["Section generation failed. Manual review required."],
                         generation_metadata={"error": str(exc), "error_type": type(exc).__name__}
@@ -126,15 +168,36 @@ class PADEROrchestrator:
                         warnings=[f"Generation failed: {type(exc).__name__}: {exc}"]
                     )
 
-        # 6. Report Metadata
+        # 6. Report Metadata - dynamically derived from dataset or file
         p_val = analyses["period_001"].value
+        inferred_product = None
+        if "medicinalproduct" in df.columns:
+            top_drugs = df["medicinalproduct"].dropna().astype(str).str.strip().str.upper()
+            valid_drugs = top_drugs[(top_drugs != "") & (top_drugs != "NAN") & (top_drugs != "NONE")]
+            if not valid_drugs.empty:
+                inferred_product = valid_drugs.value_counts().index[0]
+        if not inferred_product:
+            file_stem = Path(file_path).stem
+            # Strip upload timestamp prefix e.g., uploaded_1728123456_amoxicillin_study -> amoxicillin_study
+            clean_stem = re.sub(r"^uploaded_\d+_", "", file_stem, flags=re.IGNORECASE)
+            parts = [p for p in re.split(r"[_\-\s]+", clean_stem) if p and not p.isdigit() and p.upper() not in ("SAMPLE", "DATA", "DATASET", "STUDY", "ICSR", "ROWS", "TEST", "UPLOADED")]
+            if parts:
+                candidate = parts[0].strip().upper()
+                if candidate:
+                    inferred_product = candidate
+        if not inferred_product:
+            inferred_product = "BISOPROLOL"
+
+        app_num = "B-1" if inferred_product == "BISOPROLOL" else f"NDA-{inferred_product[:4]}-01"
+        sponsor = "Dev Pharma Client" if inferred_product == "BISOPROLOL" else "Clinical Safety Sponsor"
+
         metadata = ReportMetadata(
             report_type="PADER",
-            product_name="BISOPROLOL",
-            application_number="B-1",
-            sponsor_name="Dev Pharma Client",
-            reporting_period_start=p_val.get("start_date", "Unknown"),
-            reporting_period_end=p_val.get("end_date", "Unknown")
+            product_name=inferred_product,
+            application_number=app_num,
+            sponsor_name=sponsor,
+            reporting_period_start=p_val.get("start_date") or "Unknown",
+            reporting_period_end=p_val.get("end_date") or "Unknown"
         )
 
         # 7. Report Assembly (Phase 5) -> Defaults to DRAFT_PENDING_REVIEW
@@ -156,7 +219,12 @@ class PADEROrchestrator:
                 decision=review_decision,
                 reviewer_name=reviewer_name,
                 notes=reviewer_notes,
-                is_simulated=is_simulated_review
+                is_simulated=is_simulated_review,
+                doctor_license=doctor_license,
+                specialty=specialty,
+                affiliation=affiliation,
+                verification_id=verification_id,
+                signature_hash=signature_hash
             )
 
         # 10. Persist Output Artifacts if requested

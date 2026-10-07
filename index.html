@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PharmaVigil — Regulatory Intelligence & Automated PADER Engine</title>
+  <title>PharmaVigil – GenAR PADER Regulatory Report Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -42,30 +42,45 @@
             <h1 class="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">PharmaVigil</h1>
             <span class="text-[10px] px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">FDA 21 CFR § 314.80</span>
           </div>
-          <p class="text-xs text-slate-400">Periodic Adverse Drug Experience Report &bull; Regulatory Intelligence</p>
+          <p class="text-xs text-slate-400">Periodic Adverse Drug Experience Report &bull; Clinical Regulatory Intelligence</p>
         </div>
       </div>
 
-      <!-- Backend Connection Status & Controls -->
+      <!-- Controls & Auth Status -->
       <div class="flex items-center space-x-2 sm:space-x-3 text-xs">
         <!-- Live Backend Status Badge -->
         <div id="backendStatusPill" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer" onclick="toggleBackendModal()">
           <span id="backendStatusDot" class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full animate-ping"></span>
-          <span id="backendStatusText">Connecting to Render...</span>
+          <span id="backendStatusText">Connecting...</span>
           <i class="fa-solid fa-gear ml-1.5 text-slate-400"></i>
         </div>
 
-        <a id="btnApiDocs" href="https://pader-regulatory-engine.onrender.com/docs" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition flex items-center">
+        <a id="btnApiDocs" href="https://pader-regulatory-engine.onrender.com/docs" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition flex items-center">
           <i class="fa-solid fa-code mr-1"></i> API Docs
         </a>
+
+        <!-- Auth Header Controls -->
+        <div id="authHeaderControls" class="flex items-center space-x-2">
+          <button id="btnHeaderAuth" onclick="toggleAuthModal()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded font-medium transition flex items-center shadow-sm">
+            <i class="fa-solid fa-user-doctor mr-1.5"></i> <span id="authHeaderText">Sign In / Register</span>
+          </button>
+          <div id="userProfileBadge" class="hidden items-center space-x-2 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-full text-slate-200">
+            <i id="userRoleIcon" class="fa-solid fa-user-doctor text-emerald-400 text-xs"></i>
+            <span id="userNameText" class="font-medium text-xs">Dr. Eleanor Vance, MD</span>
+            <span id="userRoleBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Doctor</span>
+            <button onclick="handleLogout()" title="Log Out" class="text-slate-400 hover:text-rose-400 ml-1 transition">
+              <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- Waking Up Banner (Render Cold Start Notification) -->
+  <!-- Waking Up Banner -->
   <div id="wakingBanner" class="hidden bg-amber-500 text-slate-950 px-4 py-2 text-xs font-semibold text-center flex items-center justify-center space-x-2 shadow-inner">
     <i class="fa-solid fa-hourglass-half fa-spin"></i>
-    <span>Render free tier spins down on inactivity. Waking backend up (takes ~30s on first load)... <span id="wakingRetryCountdown"></span></span>
+    <span>Connecting to backend server... <span id="wakingRetryCountdown"></span></span>
   </div>
 
   <!-- Main Application Body -->
@@ -81,55 +96,64 @@
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
               <i class="fa-solid fa-database text-teal-600 mr-2"></i> 1. Source ICSR Dataset
             </h2>
-            <span class="text-xs text-slate-500" id="datasetBadge">Reference Ready</span>
+            <span class="text-xs text-slate-500 font-medium" id="datasetBadge">Reference Ready</span>
           </div>
 
           <p class="text-xs text-slate-600 mb-3">
-            Load the authoritative 1,068-row Bisoprolol benchmark dataset from Render, or upload a custom ICSR line-listing.
+            Load the authoritative 1,068-row Bisoprolol benchmark dataset, or upload any custom ICSR line-listing (CSV/Excel).
           </p>
 
-          <button onclick="loadSampleData()" id="btnLoadSample" class="w-full mb-3 py-2 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-semibold flex items-center justify-center transition">
+          <button onclick="resetToSampleData()" id="btnLoadSample" class="w-full mb-3 py-2 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-semibold flex items-center justify-center transition">
             <i class="fa-solid fa-bolt text-teal-600 mr-2"></i> Load Bundled Bisoprolol Dataset (1,068 rows)
           </button>
 
           <!-- Upload Dropzone -->
-          <div class="relative border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-lg p-4 text-center cursor-pointer transition" id="dropzone">
+          <div class="relative border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-lg p-4 text-center cursor-pointer transition mb-3" id="dropzone">
             <input type="file" id="fileInput" accept=".xlsx,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
             <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
             <p class="text-xs font-medium text-slate-700">Drop ICSR Excel / CSV here</p>
-            <p class="text-[10px] text-slate-400">or click to browse from device</p>
+            <p class="text-[10px] text-slate-400">or click to browse from device (automatic analysis)</p>
           </div>
 
-          <!-- Dataset Stats Mini-Grid -->
-          <div id="datasetStats" class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">Dataset:</span>
-              <span class="font-semibold text-slate-800 truncate block" id="statDatasetName">Bisoprolol_1068rows</span>
+          <!-- Dataset Live Statistics Pill -->
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-2">
+            <div class="flex justify-between items-center pb-1 border-b border-slate-200">
+              <span class="text-slate-500 font-medium">Active Dataset:</span>
+              <span class="font-bold text-slate-800 truncate max-w-[180px]" id="statDatasetName">Bisoprolol_icsr_sample_1068rows.xlsx</span>
             </div>
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">Unique Cases:</span>
-              <span class="font-semibold text-slate-800" id="statCaseCount">1,024 cases</span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">Serious Cases:</span>
-              <span class="font-semibold text-rose-600" id="statSeriousCount">99.9% (1,023)</span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">15-Day Alerts:</span>
-              <span class="font-semibold text-amber-600" id="statAlertCount">1,023 alerts</span>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span class="text-slate-500">Case Volume:</span>
+                <p class="font-semibold text-slate-800" id="statCaseCount">1,024 cases</p>
+              </div>
+              <div>
+                <span class="text-slate-500">Seriousness:</span>
+                <p class="font-semibold text-rose-600" id="statSeriousCount">99.9% (1,023)</p>
+              </div>
+              <div>
+                <span class="text-slate-500">Expedited Alerts:</span>
+                <p class="font-semibold text-amber-600" id="statAlertCount">1,023 alerts</p>
+              </div>
+              <div>
+                <span class="text-slate-500">Validation Status:</span>
+                <p class="font-semibold text-emerald-600" id="statValidStatus">Verified Compliant</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Step 2: Grounded LLM Pipeline Configuration -->
+﻿        <!-- Step 2: Deterministic Regulatory LLM Generation Card -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center">
-            <i class="fa-solid fa-brain text-indigo-600 mr-2"></i> 2. Grounded Pipeline Engine
+          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center">
+            <i class="fa-solid fa-brain text-teal-600 mr-2"></i> 2. Grounded Regulatory Engine
           </h2>
+          <p class="text-xs text-slate-600 mb-3">
+            Generates 8 required PADER sections strictly anchored to deterministic pre-computed evidence.
+          </p>
 
           <div class="space-y-3 text-xs">
             <div>
-              <label class="block text-slate-700 font-medium mb-1">LLM Execution Mode</label>
+              <label class="block text-slate-700 font-medium mb-1">Model Inference Provider</label>
               <select id="llmProvider" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none" onchange="toggleApiKeyField()">
                 <option value="mock">Offline Deterministic Mock (100% Grounded, Free)</option>
                 <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
@@ -151,7 +175,7 @@
             </div>
 
             <div class="bg-slate-50 border border-slate-200 rounded p-2.5 text-[11px] text-slate-600 space-y-1">
-              <p><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i> <strong>Zero Hallucinated Calculations:</strong> Raw math executed by deterministic layer on Render backend.</p>
+              <p><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i> <strong>Zero Hallucinated Calculations:</strong> Raw math executed by deterministic layer on backend.</p>
               <p><i class="fa-solid fa-filter text-indigo-600 mr-1"></i> <strong>Context Boundary:</strong> Only pre-computed evidence packets with strict verification schemas are fed to LLM.</p>
             </div>
 
@@ -161,19 +185,57 @@
           </div>
         </div>
 
-        <!-- Step 3: Human Medical Reviewer Console -->
+        <!-- Step 3: Doctor Human Verification Console -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5" id="reviewConsoleCard">
-          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center">
-            <i class="fa-solid fa-signature text-amber-600 mr-2"></i> 3. Human Review Station
-          </h2>
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-signature text-amber-600 mr-2"></i> 3. Doctor Verification Station
+            </h2>
+            <span id="reviewRoleStatusBadge" class="text-[10px] px-2 py-0.5 rounded font-semibold bg-slate-100 text-slate-600 border border-slate-200">Auth Required</span>
+          </div>
           <p class="text-xs text-slate-600 mb-3">
-            In compliance with FDA regulations, automated evaluation does not equal approval. An authorized medical reviewer must explicitly sign off.
+            In compliance with FDA 21 CFR § 314.80, automated evaluations require explicit sign-off by an <strong>authenticated medical professional</strong> (Doctor / Verifier role).
           </p>
+
+          <!-- Verification Gate Notice (when not logged in) -->
+          <div id="reviewAuthGate" class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-2">
+            <div class="flex items-start space-x-2">
+              <i class="fa-solid fa-lock text-amber-600 mt-0.5"></i>
+              <div>
+                <p class="font-semibold text-amber-900">Medical Professional Sign-In Required</p>
+                <p class="text-amber-800 text-[11px]">Only authenticated doctors/verifiers can validate reports. Safety analysts and guests have read-only access.</p>
+              </div>
+            </div>
+            <div class="flex space-x-2 pt-1">
+              <button onclick="openDoctorLoginModal()" class="py-1 px-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-semibold transition flex items-center">
+                <i class="fa-solid fa-user-doctor mr-1"></i> Sign In as Doctor
+              </button>
+            </div>
+          </div>
+
+          <!-- Doctor Credentials Banner (when authenticated as Doctor) -->
+          <div id="reviewDoctorBanner" class="hidden mb-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
+            <div class="flex items-center justify-between font-bold">
+              <span class="flex items-center"><i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Authenticated Medical Verifier</span>
+              <span id="docLicenseBadge" class="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-mono">MED-PV-849201</span>
+            </div>
+            <p id="docDetailsText" class="text-[11px] text-emerald-700 mt-0.5">Dr. Eleanor Vance, MD &bull; Cardiovascular Pharmacovigilance</p>
+          </div>
+
+          <!-- Non-Doctor Warning Banner (when authenticated as Analyst) -->
+          <div id="reviewAnalystWarning" class="hidden mb-3 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i>
+            <span>Signed in with <strong>Analyst</strong> role. Doctor/Verifier credentials required to sign off.</span>
+          </div>
 
           <div class="space-y-3 text-xs">
             <div>
-              <label class="block text-slate-700 font-medium mb-1">Reviewer Name & Credentials</label>
-              <input type="text" id="reviewerName" value="Dr. J. Doe, Qualified Safety Reviewer" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+              <label class="block text-slate-700 font-medium mb-1">Medical Reviewer Name & Credentials</label>
+              <input type="text" id="reviewerName" value="Dr. Eleanor Vance, MD" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none bg-slate-50" readonly>
+            </div>
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Medical License / Registration No.</label>
+              <input type="text" id="reviewerLicense" value="MED-PV-849201" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none bg-slate-50 font-mono" readonly>
             </div>
             <div>
               <label class="block text-slate-700 font-medium mb-1">Regulatory Sign-Off Decision</label>
@@ -184,11 +246,11 @@
               </select>
             </div>
             <div>
-              <label class="block text-slate-700 font-medium mb-1">Audit Notes / Comments</label>
-              <textarea id="reviewerNotes" rows="2" placeholder="Verified all 15-day alert tables and MedDRA counts against source evidence." class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+              <label class="block text-slate-700 font-medium mb-1">Audit Notes / Clinical Rationale</label>
+              <textarea id="reviewerNotes" rows="2" placeholder="Verified all 15-day alert tables, causality assessments, and MedDRA counts against source evidence." class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
             </div>
             <button onclick="submitHumanReview()" id="btnSubmitReview" class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center transition disabled:opacity-50" disabled>
-              <i class="fa-solid fa-stamp mr-2"></i> Record Reviewer Decision
+              <i class="fa-solid fa-stamp mr-2"></i> Record Medical Verification & Sign-Off
             </button>
           </div>
         </div>
@@ -203,7 +265,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div class="flex items-center space-x-2">
-                <h2 class="text-base font-bold text-slate-900" id="currentReportTitle">PADER-BISOPROLOL-REPORT</h2>
+                <h2 class="text-base font-bold text-slate-900" id="currentReportTitle">PADER-REPORT</h2>
                 <span id="statusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                   DRAFT_PENDING_REVIEW
                 </span>
@@ -222,6 +284,27 @@
                 <i class="fa-solid fa-print mr-1"></i> Print
               </button>
             </div>
+          </div>
+
+          <!-- Official Doctor Verification Seal / Card -->
+          <div id="doctorVerificationBanner" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <div>
+                <p class="font-bold text-emerald-950 flex items-center">
+                  <span>Clinically Verified by <span id="verifDocName">Dr. Eleanor Vance, MD</span></span>
+                  <span class="ml-2 text-[10px] px-1.5 py-0.2 rounded bg-emerald-200 text-emerald-800 font-semibold uppercase">Official Sign-Off</span>
+                </p>
+                <p class="text-[11px] text-emerald-800">
+                  License: <span id="verifDocLicense" class="font-mono font-medium">MED-PV-849201</span> &bull;
+                  Timestamp: <span id="verifTimestamp" class="font-mono">--</span> &bull;
+                  ID: <span id="verifSigId" class="font-mono text-[10px]">--</span>
+                </p>
+              </div>
+            </div>
+            <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-1 rounded">21 CFR § 314.80 COMPLIANT</span>
           </div>
 
           <!-- Evaluation Score Bar -->
@@ -245,36 +328,44 @@
           </div>
         </div>
 
-        <!-- Tabbed Report Display -->
+﻿        <!-- Tabbed Report Display -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="border-b border-slate-200 bg-slate-50 px-4 flex space-x-6 text-xs font-semibold no-print">
             <button onclick="switchTab('reportView')" id="tabBtnReport" class="py-3 text-teal-700 border-b-2 border-teal-600">
-              <i class="fa-solid fa-file-lines mr-1.5"></i> Formatted PADER Report
+              <i class="fa-solid fa-file-medical mr-1.5"></i> Rendered Regulatory Report
             </button>
             <button onclick="switchTab('auditView')" id="tabBtnAudit" class="py-3 text-slate-500 hover:text-slate-800">
-              <i class="fa-solid fa-microscope mr-1.5"></i> Grounding Verification Details
+              <i class="fa-solid fa-shield-check mr-1.5"></i> Grounding & Hallucination Audit
             </button>
-            <button onclick="switchTab('rawMdView')" id="tabBtnRaw" class="py-3 text-slate-500 hover:text-slate-800">
-              <i class="fa-brands fa-markdown mr-1.5"></i> Raw Markdown Source
+            <button onclick="switchTab('rawView')" id="tabBtnRaw" class="py-3 text-slate-500 hover:text-slate-800">
+              <i class="fa-solid fa-code mr-1.5"></i> Raw Markdown Source
             </button>
+          </div>
+
+          <!-- Loading Spinner -->
+          <div id="reportLoadingSpinner" class="hidden p-12 text-center space-y-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-teal-600"></i>
+            <p class="text-sm font-semibold text-slate-700">Executing deterministic PADER pipeline...</p>
+            <p class="text-xs text-slate-400">Computing MedDRA PT frequencies &bull; Building context boundary &bull; Verifying numerical grounding</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="reportEmptyState" class="p-12 text-center space-y-2">
+            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto text-xl">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <p class="text-sm font-semibold text-slate-700">No Regulatory Report Active</p>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">Upload a dataset or use bundled reference data, then click "Run Regulatory Pipeline" to generate the PADER report.</p>
           </div>
 
           <!-- Tab 1: Rendered Document -->
           <div id="tabReport" class="p-6">
-            <div id="reportLoadingSpinner" class="hidden text-center py-12">
-              <i class="fa-solid fa-circle-notch fa-spin text-3xl text-teal-600 mb-3"></i>
-              <p class="text-sm font-medium text-slate-700">Connecting to Render backend & running deterministic pipeline...</p>
-              <p class="text-xs text-slate-400 mt-1">Collecting evidence packets & validating hallucination guards</p>
+            <div id="reportRenderedContent" class="prose max-w-none text-slate-800 text-sm hidden leading-relaxed">
+              <!-- Rendered markdown goes here -->
             </div>
-            <div id="reportEmptyState" class="text-center py-16 text-slate-400">
-              <i class="fa-solid fa-clipboard-check text-4xl mb-3 text-slate-300"></i>
-              <p class="text-sm font-medium text-slate-600">No PADER Report Generated Yet</p>
-              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Click "Run Regulatory Pipeline" in the control panel to generate an audit-ready PADER safety report.</p>
-            </div>
-            <div id="reportRenderedContent" class="prose max-w-none text-slate-800 text-sm hidden"></div>
           </div>
 
-          <!-- Tab 2: Grounding & Audit Verification -->
+          <!-- Tab 2: Grounding Audit Details -->
           <div id="tabAudit" class="p-6 hidden">
             <div class="mb-4">
               <h3 class="text-sm font-bold text-slate-900">Hallucination & Number Extraction Audit</h3>
@@ -301,6 +392,102 @@
 
     </div>
   </main>
+
+  <!-- Authentication Modal (Login & Register) -->
+  <div id="authModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full shadow-2xl border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center">
+          <i class="fa-solid fa-shield-halved text-teal-600 mr-2"></i> Medical & Analyst Authentication
+        </h3>
+        <button onclick="toggleAuthModal()" class="text-slate-400 hover:text-slate-600 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Quick Demo Access Bar -->
+      <div class="mb-4 bg-teal-50/70 border border-teal-200 rounded-lg p-2.5 text-xs">
+        <p class="font-semibold text-teal-900 mb-1.5 flex items-center">
+          <i class="fa-solid fa-bolt text-teal-600 mr-1.5"></i> 1-Click Evaluation Credentials:
+        </p>
+        <div class="flex space-x-2">
+          <button onclick="quickLoginDemo('doctor')" class="flex-1 py-1.5 px-2 bg-teal-700 hover:bg-teal-800 text-white rounded text-[11px] font-semibold transition flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-user-doctor mr-1"></i> Demo Doctor
+          </button>
+          <button onclick="quickLoginDemo('analyst')" class="flex-1 py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-semibold transition flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-chart-line mr-1"></i> Demo Analyst
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs: Sign In / Register -->
+      <div class="flex border-b border-slate-200 mb-3 text-xs font-semibold">
+        <button id="authTabBtnLogin" onclick="switchAuthTab('login')" class="py-2 px-4 text-teal-700 border-b-2 border-teal-600">Sign In</button>
+        <button id="authTabBtnRegister" onclick="switchAuthTab('register')" class="py-2 px-4 text-slate-500 hover:text-slate-800">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Email or Username</label>
+          <input type="text" id="loginUsername" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Password</label>
+          <input type="password" id="loginPassword" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+        </div>
+        <div id="loginErrorMsg" class="hidden text-rose-600 text-[11px] font-medium"></div>
+        <button type="submit" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded font-semibold text-xs transition">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="space-y-2.5 text-xs hidden">
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Full Name & Title</label>
+          <input type="text" id="regFullName" placeholder="Dr. Sarah Connor, MD" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Username / Email</label>
+            <input type="text" id="regUsername" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Password (min 6)</label>
+            <input type="password" id="regPassword" required minlength="6" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Role / Account Type</label>
+          <select id="regRole" onchange="toggleRegDoctorFields()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            <option value="doctor">Doctor / Medical Verifier (Sign-off authorized)</option>
+            <option value="analyst">Safety Analyst (Data & report generation only)</option>
+          </select>
+        </div>
+        <div id="regDoctorFields" class="space-y-2">
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Medical Registration / License No.</label>
+            <input type="text" id="regLicense" placeholder="MED-CA-948210" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs font-mono focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Clinical Specialty</label>
+              <input type="text" id="regSpecialty" placeholder="Pharmacovigilance" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-medium mb-1">Affiliation / Hospital</label>
+              <input type="text" id="regAffiliation" placeholder="Safety Board" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+        <div id="regErrorMsg" class="hidden text-rose-600 text-[11px] font-medium"></div>
+        <button type="submit" class="w-full py-2 bg-teal-600 hover:bg-teal-700 text-white rounded font-semibold text-xs transition">
+          Create Account
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- Backend Settings Modal -->
   <div id="backendModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -345,9 +532,11 @@
     </div>
   </div>
 
-  <script>
+﻿  <script>
     // Configuration & State
-    let BACKEND_URL = localStorage.getItem("PADER_BACKEND_URL") || "https://pader-regulatory-engine.onrender.com";
+    let BACKEND_URL = localStorage.getItem("PADER_BACKEND_URL") || (window.location.origin.includes("github.io") ? "https://pader-regulatory-engine.onrender.com" : window.location.origin);
+    let authToken = localStorage.getItem("PV_AUTH_TOKEN") || null;
+    let currentUser = null;
     let currentReportId = null;
     let currentReportData = null;
     let currentMarkdown = "";
@@ -356,9 +545,10 @@
     document.getElementById("backendUrlInput").value = BACKEND_URL;
     document.getElementById("btnApiDocs").href = `${BACKEND_URL}/docs`;
 
-    // Initialize Connection Check
-    window.addEventListener("DOMContentLoaded", () => {
+    // Initialize Connection & Auth Check
+    window.addEventListener("DOMContentLoaded", async () => {
       checkBackendHealth(true);
+      await initAuth();
     });
 
     async function checkBackendHealth(initial = false) {
@@ -378,7 +568,7 @@
         if (res.ok) {
           const latency = Math.round(performance.now() - startTime);
           dot.className = "w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse";
-          text.innerText = `Render: Online (${latency}ms)`;
+          text.innerText = `Online (${latency}ms)`;
           pill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 cursor-pointer";
           banner.classList.add("hidden");
           return true;
@@ -387,15 +577,267 @@
         }
       } catch (err) {
         dot.className = "w-2 h-2 mr-1.5 bg-amber-400 rounded-full animate-ping";
-        text.innerText = "Render Backend Sleeping...";
+        text.innerText = "Connecting...";
         pill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/30 cursor-pointer";
         banner.classList.remove("hidden");
-        
-        // Auto-retry waking up Render
         setTimeout(() => checkBackendHealth(), 6000);
         return false;
       }
     }
+
+    // ==========================================
+    // AUTHENTICATION FUNCTIONS
+    // ==========================================
+
+    async function initAuth() {
+      if (!authToken) {
+        updateAuthUI();
+        return;
+      }
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentUser = data.user;
+        } else {
+          authToken = null;
+          currentUser = null;
+          localStorage.removeItem("PV_AUTH_TOKEN");
+        }
+      } catch (e) {
+        console.warn("Could not reach auth service:", e);
+      }
+      updateAuthUI();
+    }
+
+    function updateAuthUI() {
+      const authBtn = document.getElementById("btnHeaderAuth");
+      const userBadge = document.getElementById("userProfileBadge");
+      const userName = document.getElementById("userNameText");
+      const roleBadge = document.getElementById("userRoleBadge");
+      const roleIcon = document.getElementById("userRoleIcon");
+
+      const gate = document.getElementById("reviewAuthGate");
+      const docBanner = document.getElementById("reviewDoctorBanner");
+      const analystWarn = document.getElementById("reviewAnalystWarning");
+      const reviewRoleBadge = document.getElementById("reviewRoleStatusBadge");
+      const reviewerInput = document.getElementById("reviewerName");
+      const licenseInput = document.getElementById("reviewerLicense");
+      const btnReview = document.getElementById("btnSubmitReview");
+
+      if (currentUser) {
+        authBtn.classList.add("hidden");
+        userBadge.classList.remove("hidden");
+        userBadge.classList.add("flex");
+        userName.innerText = currentUser.full_name;
+
+        const isDoctor = currentUser.role === "doctor" || currentUser.role === "verifier";
+        if (isDoctor) {
+          roleBadge.innerText = "Doctor";
+          roleBadge.className = "text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30";
+          roleIcon.className = "fa-solid fa-user-doctor text-emerald-400 text-xs";
+
+          gate.classList.add("hidden");
+          analystWarn.classList.add("hidden");
+          docBanner.classList.remove("hidden");
+          document.getElementById("docLicenseBadge").innerText = currentUser.medical_license || "MED-VERIFIED";
+          document.getElementById("docDetailsText").innerText = `${currentUser.full_name} • ${currentUser.specialty || "Pharmacovigilance"}`;
+
+          reviewerInput.value = currentUser.full_name;
+          licenseInput.value = currentUser.medical_license || "MED-VERIFIED";
+
+          reviewRoleBadge.innerText = "Doctor Authorized";
+          reviewRoleBadge.className = "text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200";
+
+          if (currentReportId) btnReview.disabled = false;
+        } else {
+          roleBadge.innerText = "Analyst";
+          roleBadge.className = "text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30";
+          roleIcon.className = "fa-solid fa-chart-line text-blue-400 text-xs";
+
+          gate.classList.add("hidden");
+          docBanner.classList.add("hidden");
+          analystWarn.classList.remove("hidden");
+
+          reviewRoleBadge.innerText = "Analyst (Sign-off Locked)";
+          reviewRoleBadge.className = "text-[10px] px-2 py-0.5 rounded font-semibold bg-slate-100 text-slate-700 border border-slate-300";
+
+          btnReview.disabled = true;
+        }
+      } else {
+        authBtn.classList.remove("hidden");
+        userBadge.classList.add("hidden");
+        userBadge.classList.remove("flex");
+
+        gate.classList.remove("hidden");
+        docBanner.classList.add("hidden");
+        analystWarn.classList.add("hidden");
+
+        reviewerInput.value = "Unauthenticated";
+        licenseInput.value = "N/A";
+
+        reviewRoleBadge.innerText = "Auth Required";
+        reviewRoleBadge.className = "text-[10px] px-2 py-0.5 rounded font-semibold bg-amber-100 text-amber-800 border border-amber-200";
+
+        btnReview.disabled = true;
+      }
+    }
+
+    function toggleAuthModal() {
+      const modal = document.getElementById("authModal");
+      modal.classList.toggle("hidden");
+    }
+
+    function openDoctorLoginModal() {
+      switchAuthTab("login");
+      const modal = document.getElementById("authModal");
+      modal.classList.remove("hidden");
+    }
+
+    function switchAuthTab(tab) {
+      const btnLog = document.getElementById("authTabBtnLogin");
+      const btnReg = document.getElementById("authTabBtnRegister");
+      const fLog = document.getElementById("loginForm");
+      const fReg = document.getElementById("registerForm");
+
+      if (tab === "login") {
+        btnLog.className = "py-2 px-4 text-teal-700 border-b-2 border-teal-600";
+        btnReg.className = "py-2 px-4 text-slate-500 hover:text-slate-800";
+        fLog.classList.remove("hidden");
+        fReg.classList.add("hidden");
+      } else {
+        btnReg.className = "py-2 px-4 text-teal-700 border-b-2 border-teal-600";
+        btnLog.className = "py-2 px-4 text-slate-500 hover:text-slate-800";
+        fReg.classList.remove("hidden");
+        fLog.classList.add("hidden");
+      }
+    }
+
+    function toggleRegDoctorFields() {
+      const role = document.getElementById("regRole").value;
+      const docFields = document.getElementById("regDoctorFields");
+      if (role === "doctor") {
+        docFields.classList.remove("hidden");
+      } else {
+        docFields.classList.add("hidden");
+      }
+    }
+
+    async function quickLoginDemo(role) {
+      const username = role === "doctor" ? "doctor@pharmavigil.org" : "analyst@pharmavigil.org";
+      const password = role === "doctor" ? "doctor123" : "analyst123";
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem("PV_AUTH_TOKEN", authToken);
+        updateAuthUI();
+        toggleAuthModal();
+        alert(`Signed in as ${currentUser.full_name} (${currentUser.role.toUpperCase()})`);
+      } catch (err) {
+        alert("Demo login error: " + err.message);
+      }
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const u = document.getElementById("loginUsername").value.trim();
+      const p = document.getElementById("loginPassword").value;
+      const errBox = document.getElementById("loginErrorMsg");
+      errBox.classList.add("hidden");
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Invalid login credentials.");
+        }
+        const data = await res.json();
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem("PV_AUTH_TOKEN", authToken);
+        updateAuthUI();
+        toggleAuthModal();
+      } catch (err) {
+        errBox.innerText = err.message;
+        errBox.classList.remove("hidden");
+      }
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("regFullName").value.trim();
+      const u = document.getElementById("regUsername").value.trim();
+      const p = document.getElementById("regPassword").value;
+      const role = document.getElementById("regRole").value;
+      const license = document.getElementById("regLicense").value.trim();
+      const specialty = document.getElementById("regSpecialty").value.trim();
+      const affiliation = document.getElementById("regAffiliation").value.trim();
+      const errBox = document.getElementById("regErrorMsg");
+      errBox.classList.add("hidden");
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: u,
+            password: p,
+            full_name: name,
+            role: role,
+            medical_license: license || null,
+            specialty: specialty || null,
+            affiliation: affiliation || null
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Registration failed.");
+        }
+        const data = await res.json();
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem("PV_AUTH_TOKEN", authToken);
+        updateAuthUI();
+        toggleAuthModal();
+        alert(`Account created successfully: ${currentUser.full_name} (${currentUser.role})`);
+      } catch (err) {
+        errBox.innerText = err.message;
+        errBox.classList.remove("hidden");
+      }
+    }
+
+    async function handleLogout() {
+      if (authToken) {
+        try {
+          await fetch(`${BACKEND_URL}/api/auth/logout`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${authToken}` }
+          });
+        } catch (e) {}
+      }
+      authToken = null;
+      currentUser = null;
+      localStorage.removeItem("PV_AUTH_TOKEN");
+      updateAuthUI();
+    }
+
+    // ==========================================
+    // BACKEND SETTINGS MODAL
+    // ==========================================
 
     function toggleBackendModal() {
       const modal = document.getElementById("backendModal");
@@ -423,6 +865,7 @@
           resultBox.className = "p-2.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px]";
           resultBox.innerHTML = `<strong>Success!</strong> Connected in ${latency}ms. Saved as active backend.`;
           checkBackendHealth();
+          await initAuth();
           setTimeout(() => toggleBackendModal(), 1200);
         } else {
           throw new Error(`HTTP ${res.status}`);
@@ -443,6 +886,10 @@
       }
     }
 
+    // ==========================================
+    // DATASET UPLOAD & SAMPLE LOADING
+    // ==========================================
+
     async function loadSampleData() {
       try {
         const res = await fetch(`${BACKEND_URL}/api/sample-data`);
@@ -452,10 +899,21 @@
         document.getElementById("statCaseCount").innerText = `${data.total_cases.toLocaleString()} cases`;
         document.getElementById("statSeriousCount").innerText = `${data.serious_percentage}% (${data.serious_cases.toLocaleString()})`;
         document.getElementById("statAlertCount").innerText = `${data.expedited_alerts.toLocaleString()} alerts`;
+        document.getElementById("datasetBadge").innerText = "Reference Ready";
+        document.getElementById("datasetBadge").className = "text-xs text-slate-500 font-medium";
         uploadedFilePath = null;
-        alert(`Loaded reference dataset from Render: ${data.dataset_name} (${data.total_cases.toLocaleString()} unique cases, ${data.total_rows.toLocaleString()} rows). Ready for generation.`);
+        alert(`Loaded reference dataset from backend: ${data.dataset_name} (${data.total_cases.toLocaleString()} cases).`);
       } catch (err) {
-        alert("Error loading sample dataset from backend: " + err.message);
+        alert("Error loading sample dataset: " + err.message);
+      }
+    }
+
+    async function resetToSampleData() {
+      try {
+        await fetch(`${BACKEND_URL}/api/dataset/reset`, { method: "POST" });
+        await loadSampleData();
+      } catch (err) {
+        await loadSampleData();
       }
     }
 
@@ -471,15 +929,24 @@
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
         uploadedFilePath = data.stored_path;
+
+        // Immediately update all dataset statistics cards in UI
         document.getElementById("statDatasetName").innerText = data.filename;
-        document.getElementById("statCaseCount").innerText = `${data.unique_cases.toLocaleString()} cases`;
-        document.getElementById("statSeriousCount").innerText = `${data.serious_cases.toLocaleString()} serious`;
-        document.getElementById("datasetBadge").innerText = "Custom File Loaded";
-        alert(`File uploaded to Render backend: ${data.filename} (${data.unique_cases.toLocaleString()} cases)`);
+        document.getElementById("statCaseCount").innerText = `${data.total_cases.toLocaleString()} cases`;
+        document.getElementById("statSeriousCount").innerText = `${data.serious_percentage}% (${data.serious_cases.toLocaleString()})`;
+        document.getElementById("statAlertCount").innerText = `${data.expedited_alerts.toLocaleString()} alerts`;
+        document.getElementById("datasetBadge").innerText = "Custom Dataset Active";
+        document.getElementById("datasetBadge").className = "text-xs text-emerald-700 font-semibold";
+
+        alert(`Uploaded and analyzed dataset: ${data.filename}\n- ${data.total_cases.toLocaleString()} Cases\n- ${data.serious_cases.toLocaleString()} Serious (${data.serious_percentage}%)\n- ${data.expedited_alerts.toLocaleString()} 15-day alerts\nReady to generate report.`);
       } catch (err) {
         alert("Upload error: " + err.message);
       }
     }
+
+    // ==========================================
+    // PIPELINE GENERATION
+    // ==========================================
 
     async function triggerPipeline() {
       const btn = document.getElementById("btnGenerate");
@@ -536,7 +1003,7 @@
     function updateReportUI(data) {
       const ev = data.evaluation;
       document.getElementById("currentReportTitle").innerText = data.report_id;
-      document.getElementById("reportSubheader").innerText = `Reporting Period: ${currentReportData.metadata.reporting_period_start} to ${currentReportData.metadata.reporting_period_end}`;
+      document.getElementById("reportSubheader").innerText = `Product: ${currentReportData.metadata.product_name} • Period: ${currentReportData.metadata.reporting_period_start} to ${currentReportData.metadata.reporting_period_end}`;
       
       const badge = document.getElementById("statusBadge");
       badge.innerText = data.report_status;
@@ -566,10 +1033,13 @@
       // Populate Audit Cards
       renderAuditDetails(ev);
 
-      // Enable export buttons & review button
+      // Enable export buttons & review button if doctor
       document.getElementById("btnDownload").disabled = false;
       document.getElementById("btnAuditJson").disabled = false;
-      document.getElementById("btnSubmitReview").disabled = false;
+
+      if (currentUser && (currentUser.role === "doctor" || currentUser.role === "verifier")) {
+        document.getElementById("btnSubmitReview").disabled = false;
+      }
     }
 
     function renderAuditDetails(ev) {
@@ -597,28 +1067,55 @@
       container.innerHTML = html;
     }
 
+    // ==========================================
+    // DOCTOR HUMAN VERIFICATION SUBMISSION
+    // ==========================================
+
     async function submitHumanReview() {
       if (!currentReportId) {
         alert("Please generate a report first.");
         return;
       }
 
-      const reviewer = document.getElementById("reviewerName").value;
+      if (!currentUser) {
+        alert("Authentication required. Please sign in as an authorized Doctor / Medical Verifier.");
+        openDoctorLoginModal();
+        return;
+      }
+
+      if (currentUser.role !== "doctor" && currentUser.role !== "verifier") {
+        alert("Access Denied: Only authenticated medical professionals with the Doctor/Verifier role may sign off on regulatory reports.");
+        return;
+      }
+
+      const reviewer = currentUser.full_name;
+      const license = currentUser.medical_license || "MED-VERIFIED";
       const decision = document.getElementById("reviewDecisionSelect").value;
       const notes = document.getElementById("reviewerNotes").value;
 
       try {
+        const headers = { "Content-Type": "application/json" };
+        if (authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
         const res = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/review`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: headers,
           body: JSON.stringify({
             decision: decision,
             reviewer_name: reviewer,
+            doctor_license: license,
+            specialty: currentUser.specialty,
+            affiliation: currentUser.affiliation,
             notes: notes
           })
         });
 
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Verification failed.");
+        }
         const data = await res.json();
 
         // Refresh markdown
@@ -637,7 +1134,17 @@
           badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200";
         }
 
-        alert(`Human review recorded on Render backend: ${data.new_status}`);
+        // Show Doctor Verification Stamp Seal Banner
+        if (data.verification) {
+          const v = data.verification;
+          document.getElementById("verifDocName").innerText = v.doctor_name;
+          document.getElementById("verifDocLicense").innerText = v.medical_license;
+          document.getElementById("verifTimestamp").innerText = v.verified_at_utc.replace("T", " ").substring(0, 19) + " UTC";
+          document.getElementById("verifSigId").innerText = v.verification_id;
+          document.getElementById("doctorVerificationBanner").classList.remove("hidden");
+        }
+
+        alert(`Medical verification recorded in backend database!\nStatus: ${data.new_status}\nVerified By: ${reviewer}\nLicense: ${license}\nVerification ID: ${data.verification ? data.verification.verification_id : 'N/A'}`);
       } catch (err) {
         alert("Review sign-off error: " + err.message);
       }

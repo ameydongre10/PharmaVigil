@@ -1,5 +1,5 @@
-"""
-Human Review & Revision Manager — provides structured audit trails and targeted section revision.
+﻿"""
+Human Review & Revision Manager ?" provides structured audit trails and targeted section revision.
 Enforces that automated generation produces PENDING_REVIEW, requiring an explicit review action to approve.
 """
 
@@ -24,10 +24,16 @@ class HumanReviewManager:
         decision: ReviewDecision,
         reviewer_name: str = "Qualified Safety Reviewer",
         notes: Optional[str] = None,
-        is_simulated: bool = False
+        is_simulated: bool = False,
+        doctor_license: Optional[str] = None,
+        specialty: Optional[str] = None,
+        affiliation: Optional[str] = None,
+        verification_id: Optional[str] = None,
+        signature_hash: Optional[str] = None
     ) -> PADERReport:
         """
-        Record an explicit human review decision (or a designated simulated test fixture decision).
+        Record an explicit human review decision (or a designated simulated test fixture decision),
+        along with verified medical credentials and verification audit signature.
         """
         section_statuses = {}
         for sec in report.sections:
@@ -57,6 +63,11 @@ class HumanReviewManager:
             report_id=f"PADER-{report.metadata.product_name}-{report.metadata.reporting_period_end}",
             reviewer_decision=decision,
             reviewer_name=reviewer_name,
+            doctor_license=doctor_license,
+            specialty=specialty,
+            affiliation=affiliation,
+            verification_id=verification_id,
+            signature_hash=signature_hash,
             is_simulated=is_simulated,
             section_statuses=section_statuses,
             reviewer_notes=notes

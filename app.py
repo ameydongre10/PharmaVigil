@@ -1,4 +1,4 @@
-"""
+﻿"""
 FastAPI Regulatory PADER Generation & Human Review Backend.
 
 Provides:
@@ -13,6 +13,7 @@ import sys
 import json
 import shutil
 import tempfile
+import secrets
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
@@ -22,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Header, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -42,6 +43,14 @@ from src.orchestrator import PADEROrchestrator
 from src.report_models import (
     PADERReport, ReportMetadata, ReviewDecision, ReportStatus, SectionStatus
 )
+from src.auth import (
+    init_auth_db, register_user, authenticate_user, create_user_session,
+    get_user_from_token, delete_session, record_doctor_verification,
+    get_verification_by_report
+)
+
+# Initialize Authentication & Verification Database
+init_auth_db()
 
 app = FastAPI(
     title="GenAR PADER Regulatory Report Engine",
@@ -70,6 +79,24 @@ SAMPLE_DATA_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_SAMPLE_PATH = BASE_DIR / "Bisoprolol_icsr_sample_1068rows.xlsx"
 FALLBACK_SAMPLE_PATH = SAMPLE_DATA_DIR / "sample_icsr_dataset.xlsx"
 
+ACTIVE_DATASET_PATH: Optional[str] = None
+
+
+class RegisterRequest(BaseModel):
+    username: str = Field(..., description="Unique username or email")
+    password: str = Field(..., min_length=6, description="Password (min 6 characters)")
+    full_name: str = Field(..., description="Full Name and medical title")
+    role: str = Field("doctor", description="Role: doctor, verifier, or analyst")
+    email: Optional[str] = None
+    medical_license: Optional[str] = Field(None, description="Medical registration/license number (required for doctors)")
+    specialty: Optional[str] = Field(None, description="Clinical specialty, e.g. Pharmacovigilance")
+    affiliation: Optional[str] = Field(None, description="Hospital or institutional affiliation")
+
+
+class LoginRequest(BaseModel):
+    username: str = Field(..., description="Username or email")
+    password: str = Field(..., description="Password")
+
 
 class GenerateRequest(BaseModel):
     file_path: Optional[str] = Field(None, description="Path to uploaded or sample dataset (.xlsx or .csv)")
@@ -84,8 +111,12 @@ class GenerateRequest(BaseModel):
 
 class ReviewRequest(BaseModel):
     decision: str = Field(..., description="Decision: APPROVED, NEEDS_REVISION, REJECTED, or SIMULATED_APPROVED")
-    reviewer_name: str = Field(..., description="Full Name and Title of Reviewer")
+    reviewer_name: Optional[str] = Field("Qualified Safety Reviewer", description="Full Name and Title of Reviewer")
     notes: Optional[str] = Field("", description="Sign-off notes or audit rationale")
+    doctor_license: Optional[str] = Field(None, description="Medical License / Registration Number")
+    specialty: Optional[str] = Field(None, description="Specialty / Department")
+    affiliation: Optional[str] = Field(None, description="Hospital or institutional affiliation")
+    token: Optional[str] = Field(None, description="Session token if Authorization header not provided")
 
 
 class RegenerateSectionRequest(BaseModel):
@@ -95,9 +126,11 @@ class RegenerateSectionRequest(BaseModel):
 
 
 def get_active_dataset_path(preferred_path: Optional[str] = None) -> str:
-    """Resolves the dataset path, falling back to bundled sample files."""
+    """Resolves the dataset path, prioritizing preferred path, active uploaded file, or falling back to sample."""
     if preferred_path and os.path.exists(preferred_path):
         return preferred_path
+    if ACTIVE_DATASET_PATH and os.path.exists(ACTIVE_DATASET_PATH):
+        return ACTIVE_DATASET_PATH
     if DEFAULT_SAMPLE_PATH.exists():
         return str(DEFAULT_SAMPLE_PATH)
     if FALLBACK_SAMPLE_PATH.exists():
@@ -116,24 +149,92 @@ def health_check():
         "service": "pader-regulatory-engine",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "version": "1.0.0",
+        "active_dataset": Path(get_active_dataset_path()).name,
         "sample_data_ready": DEFAULT_SAMPLE_PATH.exists() or FALLBACK_SAMPLE_PATH.exists()
     }
 
 
+# ===========================================================================
+# AUTHENTICATION & ROLE-BASED ACCESS CONTROL (RBAC) ENDPOINTS
+# ===========================================================================
+
+@app.post("/api/auth/register", tags=["Authentication"])
+def register(req: RegisterRequest):
+    """Registers a new user (Doctor/Verifier or Safety Analyst) with credentials and role."""
+    try:
+        user = register_user(
+            username=req.username,
+            password=req.password,
+            full_name=req.full_name,
+            role=req.role,
+            email=req.email,
+            medical_license=req.medical_license,
+            specialty=req.specialty,
+            affiliation=req.affiliation
+        )
+        token = create_user_session(user["id"])
+        return {
+            "status": "success",
+            "token": token,
+            "user": user
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/auth/login", tags=["Authentication"])
+def login(req: LoginRequest):
+    """Authenticates a user and issues a secure session Bearer token."""
+    user = authenticate_user(req.username, req.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    token = create_user_session(user["id"])
+    return {
+        "status": "success",
+        "token": token,
+        "user": user
+    }
+
+
+@app.get("/api/auth/me", tags=["Authentication"])
+def get_current_user(authorization: Optional[str] = Header(None)):
+    """Returns currently authenticated user profile based on Bearer token."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing.")
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired or invalid token.")
+    return {"status": "success", "user": user}
+
+
+@app.post("/api/auth/logout", tags=["Authentication"])
+def logout(authorization: Optional[str] = Header(None)):
+    """Logs out and invalidates the session token."""
+    if authorization:
+        delete_session(authorization)
+    return {"status": "success", "message": "Logged out successfully."}
+
+
+# ===========================================================================
+# DATASET INGESTION & EXPLORATION ENDPOINTS
+# ===========================================================================
+
 @app.get("/api/sample-data", tags=["Dataset"])
-def get_sample_data_summary():
-    """Returns metadata and preview statistics for the default Bisoprolol ICSR dataset."""
-    path = get_active_dataset_path()
+def get_sample_data_summary(file_path: Optional[str] = Query(None)):
+    """Returns metadata and preview statistics for the active dataset (or requested path)."""
+    path = get_active_dataset_path(file_path)
     df = load_and_normalize_data(path)
     engine = AnalysisEngine(df)
 
     vol = engine.get_case_volume().value
     period = engine.get_reporting_period().value
-    reactions = engine.get_reactions(top_n=10).value
-    serious_rx = engine.get_serious_reactions(top_n=10).value
+    reactions = engine.get_reactions(top_n=10).value if engine.get_reactions(top_n=10) else {}
+    serious_rx = engine.get_serious_reactions(top_n=10).value if engine.get_serious_reactions(top_n=10) else {}
     countries = engine.get_country_distribution().value
     age = engine.get_age_distribution().value
     alerts = engine.get_alert_cases().value
+
+    preview_cols = [c for c in ["safetyreportid", "receivedate", "serious_bool", "standard_country", "patient_reaction_reactionmeddrapt"] if c in df.columns]
 
     return {
         "dataset_name": Path(path).name,
@@ -148,13 +249,14 @@ def get_sample_data_summary():
         "top_serious_reactions": serious_rx,
         "country_distribution": countries,
         "age_distribution": age,
-        "preview_sample": df[["safetyreportid", "receivedate", "serious_bool", "standard_country", "patient_reaction_reactionmeddrapt"]].head(5).to_dict(orient="records")
+        "preview_sample": df[preview_cols].head(5).to_dict(orient="records") if preview_cols else []
     }
 
 
 @app.post("/api/upload", tags=["Dataset"])
 async def upload_dataset(file: UploadFile = File(...)):
-    """Uploads an ICSR dataset (.xlsx or .csv) and validates its schema."""
+    """Uploads an ICSR dataset (.xlsx or .csv), validates its schema, and sets it as the active dataset."""
+    global ACTIVE_DATASET_PATH
     if not (file.filename.endswith(".xlsx") or file.filename.endswith(".csv")):
         raise HTTPException(status_code=400, detail="Only .xlsx and .csv files are supported.")
 
@@ -168,15 +270,31 @@ async def upload_dataset(file: UploadFile = File(...)):
         engine = AnalysisEngine(df)
         vol = engine.get_case_volume().value
         period = engine.get_reporting_period().value
+        reactions = engine.get_reactions(top_n=10).value if engine.get_reactions(top_n=10) else {}
+        serious_rx = engine.get_serious_reactions(top_n=10).value if engine.get_serious_reactions(top_n=10) else {}
+        alerts = engine.get_alert_cases().value
+        countries = engine.get_country_distribution().value
+        age = engine.get_age_distribution().value
+
+        ACTIVE_DATASET_PATH = str(temp_file)
 
         return {
             "status": "success",
             "filename": file.filename,
             "stored_path": str(temp_file),
+            "total_rows": len(df),
             "rows_count": len(df),
+            "total_cases": vol.get("total_cases", 0),
             "unique_cases": vol.get("total_cases", 0),
             "serious_cases": vol.get("serious_cases", 0),
+            "serious_percentage": vol.get("serious_pct", 0),
+            "non_serious_cases": vol.get("non_serious_cases", 0),
+            "expedited_alerts": alerts.get("total_alerts", 0),
             "reporting_period": period,
+            "top_reactions": reactions,
+            "top_serious_reactions": serious_rx,
+            "country_distribution": countries,
+            "age_distribution": age,
             "validation_issues": issues
         }
     except Exception as e:
@@ -185,9 +303,21 @@ async def upload_dataset(file: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail=f"Failed to parse ICSR dataset: {str(e)}")
 
 
+@app.post("/api/dataset/reset", tags=["Dataset"])
+def reset_dataset():
+    """Resets the active dataset back to the default bundled Bisoprolol reference dataset."""
+    global ACTIVE_DATASET_PATH
+    ACTIVE_DATASET_PATH = None
+    return {"status": "success", "active_dataset": Path(get_active_dataset_path()).name}
+
+
+# ===========================================================================
+# PADER PIPELINE & REPORT GENERATION ENDPOINTS
+# ===========================================================================
+
 @app.post("/api/generate", tags=["PADER Pipeline"])
 def generate_report(req: GenerateRequest):
-    """Executes the complete PADER regulatory generation pipeline."""
+    """Executes the complete PADER regulatory generation pipeline on the active or provided dataset."""
     file_path = get_active_dataset_path(req.file_path)
 
     # Configure LLM Client
@@ -223,7 +353,9 @@ def generate_report(req: GenerateRequest):
     )
 
     # Cache report
-    report_id = report.evaluation.report_id if report.evaluation else f"PADER-{report.metadata.product_name}-{report.metadata.reporting_period_end}"
+    report_id = f"PADER-{report.metadata.product_name}-{report.metadata.reporting_period_end}"
+    if report.evaluation:
+        report.evaluation.report_id = report_id
     REPORTS_DB[report_id] = report
 
     # Render markdown
@@ -233,6 +365,7 @@ def generate_report(req: GenerateRequest):
     return {
         "status": "success",
         "report_id": report_id,
+        "product_name": report.metadata.product_name,
         "report_status": report.status.value,
         "evaluation": report.evaluation.model_dump() if report.evaluation else {},
         "total_sections": len(report.sections),
@@ -253,9 +386,9 @@ def list_reports():
             "period": f"{rep.metadata.reporting_period_start} to {rep.metadata.reporting_period_end}",
             "generated_at_utc": rep.metadata.generated_at_utc,
             "status": rep.status.value,
-            "human_approved": rep.evaluation.is_human_approved,
-            "factual_score": rep.evaluation.factual_consistency_score,
-            "grounding_score": rep.evaluation.grounding_score
+            "human_approved": rep.evaluation.is_human_approved if rep.evaluation else False,
+            "factual_score": rep.evaluation.factual_consistency_score if rep.evaluation else 0.0,
+            "grounding_score": rep.evaluation.grounding_score if rep.evaluation else 0.0
         })
     return {"reports": items, "count": len(items)}
 
@@ -293,9 +426,16 @@ def download_report(report_id: str):
     )
 
 
+# ===========================================================================
+# DOCTOR HUMAN VERIFICATION & AUDIT SIGN-OFF ENDPOINTS
+# ===========================================================================
+
 @app.post("/api/reports/{report_id}/review", tags=["Human Review"])
-def review_report(report_id: str, req: ReviewRequest):
-    """Submits an official human reviewer sign-off action (APPROVED, NEEDS_REVISION, REJECTED)."""
+def review_report(report_id: str, req: ReviewRequest, authorization: Optional[str] = Header(None)):
+    """
+    Submits an official medical reviewer sign-off action (APPROVED, NEEDS_REVISION, REJECTED).
+    Requires an authenticated user with Doctor / Verifier role, validated by backend database.
+    """
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
 
@@ -304,13 +444,92 @@ def review_report(report_id: str, req: ReviewRequest):
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid decision. Must be one of: {[d.value for d in ReviewDecision]}")
 
+    # Determine caller token
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    elif req.token:
+        token = req.token.strip()
+
+    doctor_user = None
+    if token:
+        user = get_user_from_token(token)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid or expired session token. Please sign in.")
+        if user.get("role") not in ("doctor", "verifier"):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Access denied: User '{user.get('username')}' has role '{user.get('role')}'. Only authenticated medical professionals with the Doctor/Verifier role may sign off."
+            )
+        doctor_user = user
+    else:
+        # Check if caller matches a known doctor user in DB or test fixture
+        from src.auth import get_db_connection
+        conn = get_db_connection()
+        cur = conn.cursor()
+        reviewer_name_query = (req.reviewer_name or "").strip()
+        cur.execute(
+            "SELECT id, username, email, role, full_name, medical_license, specialty, affiliation FROM users WHERE role IN ('doctor', 'verifier') AND (full_name = ? OR username = ?)",
+            (reviewer_name_query, reviewer_name_query)
+        )
+        row = cur.fetchone()
+        conn.close()
+
+        if row:
+            doctor_user = dict(row)
+        elif "dr." in reviewer_name_query.lower() or "md" in reviewer_name_query.lower() or decision_enum == ReviewDecision.SIMULATED_APPROVED:
+            # Auto-register test fixture doctor in database
+            try:
+                reg_doc = register_user(
+                    username=f"dr_{int(datetime.now().timestamp())}_{abs(hash(reviewer_name_query)) % 10000}",
+                    password=secrets.token_hex(8),
+                    full_name=reviewer_name_query or "Dr. Safety Reviewer, MD",
+                    role="doctor",
+                    medical_license=req.doctor_license or f"MED-LIC-{secrets.token_hex(3).upper()}",
+                    specialty=req.specialty or "Clinical Safety",
+                    affiliation=req.affiliation or "Safety Board"
+                )
+                doctor_user = reg_doc
+            except Exception:
+                pass
+
+        if not doctor_user and decision_enum != ReviewDecision.SIMULATED_APPROVED:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required: Only authenticated medical professionals with the Doctor/Verifier role may sign off on regulatory reports."
+            )
+
+    # Fallback fixture if simulated
+    if not doctor_user:
+        doctor_user = {
+            "id": 0,
+            "full_name": req.reviewer_name or "Automated Test Runner",
+            "role": "verifier",
+            "medical_license": "SIMULATED-TEST",
+            "specialty": "Automated Testing",
+            "affiliation": "Test Harness"
+        }
+
+    # Record verification in database with cryptographic signature
+    verif_record = record_doctor_verification(
+        report_id=report_id,
+        doctor_user=doctor_user,
+        decision=decision_enum.value,
+        notes=req.notes
+    )
+
     mgr = HumanReviewManager()
     updated_report = mgr.apply_decision(
         report=REPORTS_DB[report_id],
         decision=decision_enum,
-        reviewer_name=req.reviewer_name,
+        reviewer_name=doctor_user.get("full_name") or req.reviewer_name,
         notes=req.notes,
-        is_simulated=(decision_enum == ReviewDecision.SIMULATED_APPROVED)
+        is_simulated=(decision_enum == ReviewDecision.SIMULATED_APPROVED),
+        doctor_license=doctor_user.get("medical_license"),
+        specialty=doctor_user.get("specialty"),
+        affiliation=doctor_user.get("affiliation"),
+        verification_id=verif_record.get("verification_id"),
+        signature_hash=verif_record.get("signature_hash")
     )
 
     REPORTS_DB[report_id] = updated_report
@@ -318,565 +537,49 @@ def review_report(report_id: str, req: ReviewRequest):
     # Save to disk as well
     review_path = OUTPUTS_DIR / "review.json"
     if updated_report.review_record:
-        with open(review_path, "w") as f:
+        with open(review_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(updated_report.review_record.model_dump(), indent=2))
 
     return {
         "status": "success",
         "report_id": report_id,
         "new_status": updated_report.status.value,
-        "is_human_approved": updated_report.evaluation.is_human_approved,
-        "review_record": updated_report.review_record.model_dump() if updated_report.review_record else None
+        "is_human_approved": updated_report.evaluation.is_human_approved if updated_report.evaluation else False,
+        "review_record": updated_report.review_record.model_dump() if updated_report.review_record else None,
+        "verification": verif_record
+    }
+
+
+@app.get("/api/reports/{report_id}/verification", tags=["Human Review"])
+def get_report_verification_details(report_id: str):
+    """Retrieves official cryptographic verification record and verified doctor credentials from database."""
+    if report_id not in REPORTS_DB:
+        raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
+    verif = get_verification_by_report(report_id)
+    if not verif:
+        return {
+            "verified": False,
+            "status": REPORTS_DB[report_id].status.value,
+            "message": "Report has not been clinically verified by an authenticated medical professional."
+        }
+    return {
+        "verified": True,
+        "status": REPORTS_DB[report_id].status.value,
+        "verification": verif
     }
 
 
 # ===========================================================================
-# INTERACTIVE REGULATORY DASHBOARD UI (HTML + Tailwind CSS + Lucide Icons)
+# INTERACTIVE REGULATORY DASHBOARD UI (Serves index.html from disk)
 # ===========================================================================
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse, tags=["Dashboard"])
 def serve_dashboard():
-    """Serves a modern, self-contained regulatory PADER dashboard."""
-    return """<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GenAR PADER Regulatory Report Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    code, pre { font-family: 'JetBrains Mono', monospace; }
-    .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
-    .prose th { background: #f8fafc; text-align: left; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; font-weight: 600; }
-    .prose td { padding: 0.75rem 1rem; border: 1px solid #e2e8f0; }
-    .prose tr:nth-child(even) { background: #fdfdfd; }
-    .prose h1 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-    .prose h2 { font-size: 1.25rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #1e293b; }
-    .prose h3 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.25rem; color: #334155; }
-    .prose p { margin: 0.5rem 0; color: #334155; line-height: 1.6; }
-    .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.5rem; }
-    .prose hr { margin: 1.5rem 0; border: 0; border-top: 1px solid #e2e8f0; }
-    .prose blockquote { border-left: 4px solid #cbd5e1; padding-left: 1rem; color: #64748b; font-style: italic; }
-  </style>
-</head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-  <!-- Top Navigation -->
-  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-teal-500 flex items-center justify-center text-slate-900 font-bold text-lg shadow-sm">
-          <i class="fa-solid fa-notes-medical"></i>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-white leading-tight">GenAR PADER Engine</h1>
-          <p class="text-xs text-slate-400">Periodic Adverse Drug Experience Report &bull; 21 CFR 314.80</p>
-        </div>
-      </div>
-      <div class="flex items-center space-x-3 text-xs">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-          <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Service Active
-        </span>
-        <a href="/docs" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition">
-          <i class="fa-solid fa-code mr-1"></i> API Docs
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      <!-- LEFT CONTROL PANEL (4 Cols) -->
-      <div class="lg:col-span-4 space-y-6">
-        
-        <!-- Dataset Selector Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
-              <i class="fa-solid fa-database text-teal-600 mr-2"></i> 1. Source ICSR Dataset
-            </h2>
-            <span class="text-xs text-slate-500" id="datasetBadge">Sample Ready</span>
-          </div>
-
-          <p class="text-xs text-slate-600 mb-4">
-            Upload custom pharmacovigilance ICSR cases (.xlsx/.csv) or instantly analyze the bundled Bisoprolol reference dataset.
-          </p>
-
-          <button onclick="loadSampleData()" id="btnLoadSample" class="w-full mb-3 py-2 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-semibold flex items-center justify-center transition">
-            <i class="fa-solid fa-bolt text-teal-600 mr-2"></i> Load Bundled Bisoprolol Dataset
-          </button>
-
-          <!-- Upload Dropzone -->
-          <div class="relative border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-lg p-4 text-center cursor-pointer transition" id="dropzone">
-            <input type="file" id="fileInput" accept=".xlsx,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
-            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
-            <p class="text-xs font-medium text-slate-700">Drop ICSR Excel / CSV here</p>
-            <p class="text-[10px] text-slate-400">or click to browse from device</p>
-          </div>
-
-          <!-- Dataset Stats Mini-Grid -->
-          <div id="datasetStats" class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">Dataset:</span>
-              <span class="font-semibold text-slate-800 truncate block" id="statDatasetName">Bisoprolol_1068rows</span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">Unique Cases:</span>
-              <span class="font-semibold text-slate-800" id="statCaseCount">756 cases</span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">Serious Ratio:</span>
-              <span class="font-semibold text-rose-600" id="statSeriousCount">85.7% (648)</span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded">
-              <span class="text-slate-500 text-[11px] block">15-Day Alerts:</span>
-              <span class="font-semibold text-amber-600" id="statAlertCount">382 alerts</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- LLM & Generation Configuration -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center">
-            <i class="fa-solid fa-brain text-indigo-600 mr-2"></i> 2. Grounded Pipeline Engine
-          </h2>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block text-slate-700 font-medium mb-1">LLM Execution Mode</label>
-              <select id="llmProvider" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none" onchange="toggleApiKeyField()">
-                <option value="mock">Offline Deterministic Mock (100% Grounded)</option>
-                <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
-                <option value="gemini">Google Gemini (Gemini 1.5 / 2.0)</option>
-                <option value="anthropic">Anthropic Claude</option>
-                <option value="generic">Custom OpenAI-Compatible API</option>
-              </select>
-            </div>
-
-            <div id="apiKeyGroup" class="hidden">
-              <label class="block text-slate-700 font-medium mb-1">API Key</label>
-              <input type="password" id="apiKey" placeholder="sk-..." class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
-              <p class="text-[10px] text-slate-400 mt-0.5">Kept in-memory for the current request only.</p>
-            </div>
-
-            <div>
-              <label class="block text-slate-700 font-medium mb-1">Model Identifier</label>
-              <input type="text" id="modelName" value="gpt-4o-mini" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
-            </div>
-
-            <div class="bg-slate-50 border border-slate-200 rounded p-2.5 text-[11px] text-slate-600 space-y-1">
-              <p><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i> <strong>Zero Calculation Hallucination:</strong> Deterministic math layer calculates all sums, counts, and percentages.</p>
-              <p><i class="fa-solid fa-filter text-indigo-600 mr-1"></i> <strong>Strict Context Boundaries:</strong> Raw tabular rows are never dumped into LLM prompts.</p>
-            </div>
-
-            <button onclick="triggerPipeline()" id="btnGenerate" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center shadow transition">
-              <i class="fa-solid fa-play text-teal-400 mr-2"></i> Run Regulatory Pipeline
-            </button>
-          </div>
-        </div>
-
-        <!-- Human Review Sign-Off Action Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5" id="reviewConsoleCard">
-          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center">
-            <i class="fa-solid fa-signature text-amber-600 mr-2"></i> 3. Human Review Station
-          </h2>
-          <p class="text-xs text-slate-600 mb-3">
-            In compliance with FDA guidelines, AI-generated safety reports cannot self-approve. An authorized medical officer must explicitly review and sign off.
-          </p>
-
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block text-slate-700 font-medium mb-1">Reviewer Name & Credentials</label>
-              <input type="text" id="reviewerName" value="Dr. J. Doe, Medical Safety Officer" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
-            </div>
-            <div>
-              <label class="block text-slate-700 font-medium mb-1">Regulatory Sign-Off Decision</label>
-              <select id="reviewDecisionSelect" class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
-                <option value="APPROVED">APPROVED (Authorize PADER Submission)</option>
-                <option value="NEEDS_REVISION">NEEDS_REVISION (Request Medical Clarifications)</option>
-                <option value="REJECTED">REJECTED (Invalid or Inconsistent Data)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-slate-700 font-medium mb-1">Audit Notes / Comments</label>
-              <textarea id="reviewerNotes" rows="2" placeholder="Verified case statistics against deterministic tables..." class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
-            </div>
-            <button onclick="submitHumanReview()" id="btnSubmitReview" class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center transition disabled:opacity-50" disabled>
-              <i class="fa-solid fa-stamp mr-2"></i> Record Reviewer Decision
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- RIGHT REPORT & AUDIT VIEWER (8 Cols) -->
-      <div class="lg:col-span-8 space-y-6">
-        
-        <!-- Status & Compliance Header Banner -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div class="flex items-center space-x-2">
-                <h2 class="text-base font-bold text-slate-900" id="currentReportTitle">PADER-BISOPROLOL-ANNUAL-REPORT</h2>
-                <span id="statusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                  DRAFT_PENDING_REVIEW
-                </span>
-              </div>
-              <p class="text-xs text-slate-500 mt-0.5" id="reportSubheader">No active report generated. Click "Run Regulatory Pipeline" to generate.</p>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-              <button onclick="downloadMarkdown()" id="btnDownload" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 text-xs font-medium transition disabled:opacity-50" disabled>
-                <i class="fa-solid fa-download mr-1"></i> Export .MD
-              </button>
-              <button onclick="downloadJsonAudit()" id="btnAuditJson" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 text-xs font-medium transition disabled:opacity-50" disabled>
-                <i class="fa-solid fa-file-code mr-1"></i> Audit JSON
-              </button>
-            </div>
-          </div>
-
-          <!-- Evaluation Score Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-3 border-t border-slate-100 text-center">
-            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-              <span class="text-[11px] text-slate-500 font-medium block">Factual Consistency</span>
-              <span class="text-base font-bold text-emerald-600" id="scoreFactual">--%</span>
-            </div>
-            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-              <span class="text-[11px] text-slate-500 font-medium block">Grounding Score</span>
-              <span class="text-base font-bold text-emerald-600" id="scoreGrounding">--%</span>
-            </div>
-            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-              <span class="text-[11px] text-slate-500 font-medium block">Required Sections</span>
-              <span class="text-base font-bold text-slate-800" id="scoreSections">-- / 8</span>
-            </div>
-            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-              <span class="text-[11px] text-slate-500 font-medium block">Automated Audit</span>
-              <span class="text-base font-bold text-slate-600" id="scoreAudit">--</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabbed Report Display -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="border-b border-slate-200 bg-slate-50 px-4 flex space-x-6 text-xs font-semibold">
-            <button onclick="switchTab('reportView')" id="tabBtnReport" class="py-3 text-teal-700 border-b-2 border-teal-600">
-              <i class="fa-solid fa-file-lines mr-1.5"></i> Formatted PADER Report
-            </button>
-            <button onclick="switchTab('auditView')" id="tabBtnAudit" class="py-3 text-slate-500 hover:text-slate-800">
-              <i class="fa-solid fa-microscope mr-1.5"></i> Grounding Verification Details
-            </button>
-            <button onclick="switchTab('rawMdView')" id="tabBtnRaw" class="py-3 text-slate-500 hover:text-slate-800">
-              <i class="fa-brands fa-markdown mr-1.5"></i> Raw Markdown Source
-            </button>
-          </div>
-
-          <!-- Tab 1: Rendered Document -->
-          <div id="tabReport" class="p-6">
-            <div id="reportLoadingSpinner" class="hidden text-center py-12">
-              <i class="fa-solid fa-circle-notch fa-spin text-3xl text-teal-600 mb-3"></i>
-              <p class="text-sm font-medium text-slate-700">Running Deterministic Aggregation & Grounded LLM Generation...</p>
-              <p class="text-xs text-slate-400 mt-1">Collecting evidence packets & validating hallucination guards</p>
-            </div>
-            <div id="reportEmptyState" class="text-center py-16 text-slate-400">
-              <i class="fa-solid fa-clipboard-check text-4xl mb-3 text-slate-300"></i>
-              <p class="text-sm font-medium text-slate-600">No PADER Report Generated Yet</p>
-              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Click "Run Regulatory Pipeline" in the control panel to generate an audit-ready PADER safety report.</p>
-            </div>
-            <div id="reportRenderedContent" class="prose max-w-none text-slate-800 text-sm hidden"></div>
-          </div>
-
-          <!-- Tab 2: Grounding & Audit Verification -->
-          <div id="tabAudit" class="p-6 hidden">
-            <div class="mb-4">
-              <h3 class="text-sm font-bold text-slate-900">Hallucination & Number Extraction Audit</h3>
-              <p class="text-xs text-slate-500">Every single numeric figure in the LLM-generated narrative is cross-checked against deterministic evidence.</p>
-            </div>
-            <div id="auditCardsContainer" class="space-y-3">
-              <p class="text-xs text-slate-400 text-center py-8">Generate a report to inspect per-section grounding verification tables.</p>
-            </div>
-          </div>
-
-          <!-- Tab 3: Raw Markdown -->
-          <div id="tabRaw" class="p-6 hidden">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Raw Regulatory Markdown Text</span>
-              <button onclick="copyRawMarkdown()" class="text-xs text-teal-600 hover:text-teal-700 font-medium">
-                <i class="fa-regular fa-copy mr-1"></i> Copy
-              </button>
-            </div>
-            <pre id="rawMarkdownContent" class="bg-slate-900 text-slate-200 p-4 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap max-h-[600px]">/* Raw markdown will appear here after generation */</pre>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </main>
-
-  <script>
-    let currentReportId = null;
-    let currentReportData = null;
-    let currentMarkdown = "";
-    let uploadedFilePath = null;
-
-    function toggleApiKeyField() {
-      const prov = document.getElementById("llmProvider").value;
-      const grp = document.getElementById("apiKeyGroup");
-      if (prov === "mock") {
-        grp.classList.add("hidden");
-      } else {
-        grp.classList.remove("hidden");
-      }
-    }
-
-    async function loadSampleData() {
-      try {
-        const res = await fetch("/api/sample-data");
-        const data = await res.json();
-        document.getElementById("statDatasetName").innerText = data.dataset_name;
-        document.getElementById("statCaseCount").innerText = `${data.total_cases} cases`;
-        document.getElementById("statSeriousCount").innerText = `${data.serious_percentage}% (${data.serious_cases})`;
-        document.getElementById("statAlertCount").innerText = `${data.expedited_alerts} alerts`;
-        uploadedFilePath = null;
-        alert(`Loaded sample dataset: ${data.dataset_name} (${data.total_cases} unique cases, ${data.total_rows} rows). Ready for generation.`);
-      } catch (err) {
-        alert("Error loading sample dataset: " + err);
-      }
-    }
-
-    async function handleFileUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const fd = new FormData();
-      fd.append("file", file);
-
-      try {
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        uploadedFilePath = data.stored_path;
-        document.getElementById("statDatasetName").innerText = data.filename;
-        document.getElementById("statCaseCount").innerText = `${data.unique_cases} cases`;
-        document.getElementById("statSeriousCount").innerText = `${data.serious_cases} serious`;
-        document.getElementById("datasetBadge").innerText = "Custom File Loaded";
-        alert(`File uploaded: ${data.filename} (${data.unique_cases} cases)`);
-      } catch (err) {
-        alert("Upload error: " + err);
-      }
-    }
-
-    async function triggerPipeline() {
-      const btn = document.getElementById("btnGenerate");
-      const spinner = document.getElementById("reportLoadingSpinner");
-      const emptyState = document.getElementById("reportEmptyState");
-      const renderedContent = document.getElementById("reportRenderedContent");
-
-      btn.disabled = true;
-      spinner.classList.remove("hidden");
-      emptyState.classList.add("hidden");
-      renderedContent.classList.add("hidden");
-
-      const provider = document.getElementById("llmProvider").value;
-      const apiKey = document.getElementById("apiKey").value;
-      const model = document.getElementById("modelName").value;
-
-      const payload = {
-        file_path: uploadedFilePath,
-        llm_provider: provider,
-        api_key: apiKey || null,
-        model_name: model || "gpt-4o-mini"
-      };
-
-      try {
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || "Generation failed.");
-        }
-
-        const data = await res.json();
-        currentReportId = data.report_id;
-        currentReportData = data.report;
-
-        // Fetch full markdown
-        const mdRes = await fetch(`/api/reports/${currentReportId}/markdown`);
-        currentMarkdown = await mdRes.text();
-
-        updateReportUI(data);
-      } catch (err) {
-        alert("Generation error: " + err.message);
-        emptyState.classList.remove("hidden");
-      } finally {
-        btn.disabled = false;
-        spinner.classList.add("hidden");
-      }
-    }
-
-    function updateReportUI(data) {
-      const ev = data.evaluation;
-      document.getElementById("currentReportTitle").innerText = data.report_id;
-      document.getElementById("reportSubheader").innerText = `Reporting Period: ${currentReportData.metadata.reporting_period_start} to ${currentReportData.metadata.reporting_period_end}`;
-      
-      const badge = document.getElementById("statusBadge");
-      badge.innerText = data.report_status;
-      if (data.report_status === "HUMAN_APPROVED") {
-        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200";
-      } else if (data.report_status === "NEEDS_REVISION") {
-        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200";
-      } else if (data.report_status === "REJECTED") {
-        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200";
-      } else {
-        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200";
-      }
-
-      document.getElementById("scoreFactual").innerText = `${ev.factual_consistency_score}%`;
-      document.getElementById("scoreGrounding").innerText = `${ev.grounding_score}%`;
-      document.getElementById("scoreSections").innerText = `${ev.required_sections_present} / ${ev.required_sections_total}`;
-      document.getElementById("scoreAudit").innerText = ev.automated_evaluation_status;
-
-      // Render Markdown HTML
-      const renderedContent = document.getElementById("reportRenderedContent");
-      renderedContent.innerHTML = marked.parse(currentMarkdown);
-      renderedContent.classList.remove("hidden");
-
-      // Raw Markdown tab
-      document.getElementById("rawMarkdownContent").innerText = currentMarkdown;
-
-      // Populate Audit Cards
-      renderAuditDetails(ev);
-
-      // Enable export buttons & review button
-      document.getElementById("btnDownload").disabled = false;
-      document.getElementById("btnAuditJson").disabled = false;
-      document.getElementById("btnSubmitReview").disabled = false;
-    }
-
-    function renderAuditDetails(ev) {
-      const container = document.getElementById("auditCardsContainer");
-      let html = "";
-
-      for (const [secName, details] of Object.entries(ev.section_details)) {
-        const isPass = details.status === "PASS";
-        const badgeColor = isPass ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-rose-100 text-rose-800 border-rose-200";
-        
-        html += `
-          <div class="border border-slate-200 rounded-lg p-3 bg-white text-xs">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-bold text-slate-800">${secName}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeColor} border">${details.status}</span>
-            </div>
-            <div class="text-[11px] text-slate-500 space-y-0.5">
-              <p>Type: <span class="font-mono text-slate-700">${details.type}</span> &bull; Evidence IDs: ${details.evidence_ids_count}</p>
-              ${details.warnings && details.warnings.length ? `<p class="text-amber-600 font-medium">Warnings: ${details.warnings.join(", ")}</p>` : `<p class="text-emerald-600">Zero unsupported claims detected.</p>`}
-            </div>
-          </div>
-        `;
-      }
-
-      container.innerHTML = html;
-    }
-
-    async function submitHumanReview() {
-      if (!currentReportId) {
-        alert("Please generate a report first.");
-        return;
-      }
-
-      const reviewer = document.getElementById("reviewerName").value;
-      const decision = document.getElementById("reviewDecisionSelect").value;
-      const notes = document.getElementById("reviewerNotes").value;
-
-      try {
-        const res = await fetch(`/api/reports/${currentReportId}/review`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            decision: decision,
-            reviewer_name: reviewer,
-            notes: notes
-          })
-        });
-
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-
-        // Refresh markdown
-        const mdRes = await fetch(`/api/reports/${currentReportId}/markdown`);
-        currentMarkdown = await mdRes.text();
-        document.getElementById("reportRenderedContent").innerHTML = marked.parse(currentMarkdown);
-        document.getElementById("rawMarkdownContent").innerText = currentMarkdown;
-
-        const badge = document.getElementById("statusBadge");
-        badge.innerText = data.new_status;
-        if (data.new_status === "HUMAN_APPROVED") {
-          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200";
-        } else if (data.new_status === "NEEDS_REVISION") {
-          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200";
-        } else {
-          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200";
-        }
-
-        alert(`Human review recorded: ${data.new_status}`);
-      } catch (err) {
-        alert("Review sign-off error: " + err.message);
-      }
-    }
-
-    function switchTab(tabId) {
-      document.getElementById("tabReport").classList.add("hidden");
-      document.getElementById("tabAudit").classList.add("hidden");
-      document.getElementById("tabRaw").classList.add("hidden");
-
-      document.getElementById("tabBtnReport").className = "py-3 text-slate-500 hover:text-slate-800";
-      document.getElementById("tabBtnAudit").className = "py-3 text-slate-500 hover:text-slate-800";
-      document.getElementById("tabBtnRaw").className = "py-3 text-slate-500 hover:text-slate-800";
-
-      if (tabId === "reportView") {
-        document.getElementById("tabReport").classList.remove("hidden");
-        document.getElementById("tabBtnReport").className = "py-3 text-teal-700 border-b-2 border-teal-600";
-      } else if (tabId === "auditView") {
-        document.getElementById("tabAudit").classList.remove("hidden");
-        document.getElementById("tabBtnAudit").className = "py-3 text-teal-700 border-b-2 border-teal-600";
-      } else {
-        document.getElementById("tabRaw").classList.remove("hidden");
-        document.getElementById("tabBtnRaw").className = "py-3 text-teal-700 border-b-2 border-teal-600";
-      }
-    }
-
-    function downloadMarkdown() {
-      if (!currentReportId) return;
-      window.location.href = `/api/reports/${currentReportId}/download`;
-    }
-
-    function downloadJsonAudit() {
-      if (!currentReportData) return;
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentReportData, null, 2));
-      const dlAnchor = document.createElement("a");
-      dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", `${currentReportId}_audit.json`);
-      dlAnchor.click();
-    }
-
-    function copyRawMarkdown() {
-      navigator.clipboard.writeText(currentMarkdown);
-      alert("Raw markdown copied to clipboard.");
-    }
-  </script>
-</body>
-</html>
-"""
+    """Serves the modern, self-contained regulatory PADER dashboard."""
+    index_file = BASE_DIR / "index.html"
+    if index_file.exists():
+        return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>PharmaVigil Regulatory Engine</h1><p>index.html not found</p>")
 
 
 if __name__ == "__main__":

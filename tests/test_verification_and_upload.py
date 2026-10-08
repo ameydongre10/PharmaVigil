@@ -258,3 +258,69 @@ def test_excel_dataset_upload_and_analysis(client):
 
     # Reset back to benchmark dataset
     client.post("/api/dataset/reset")
+
+
+def test_upload_validation_errors(client):
+    """Tests strict validation and meaningful errors for upload edge cases."""
+    # 1. Invalid file type (.pdf)
+    res_pdf = client.post("/api/upload", files={"file": ("trial.pdf", io.BytesIO(b"%PDF-1.4 header"), "application/pdf")})
+    assert res_pdf.status_code == 400
+    assert "Invalid file type" in res_pdf.json()["detail"]
+
+    # 2. Empty dataset (0 bytes)
+    res_empty = client.post("/api/upload", files={"file": ("empty.csv", io.BytesIO(b""), "text/csv")})
+    assert res_empty.status_code == 400
+    assert "Empty dataset" in res_empty.json()["detail"]
+
+    # 3. Malformed CSV (unclosed quote error)
+    res_malformed = client.post("/api/upload", files={"file": ("malformed.csv", io.BytesIO(b"col1,col2\n\"unclosed quote,123"), "text/csv")})
+    assert res_malformed.status_code == 400
+    assert "Malformed CSV file" in res_malformed.json()["detail"] or "Error tokenizing" in res_malformed.json()["detail"]
+
+    # 4. Missing required ICSR fields (unrelated data schema)
+    res_groceries = client.post("/api/upload", files={"file": ("groceries.csv", io.BytesIO(b"item,price,quantity\nApple,1.5,10\nBanana,0.8,20"), "text/csv")})
+    assert res_groceries.status_code == 400
+    assert "Missing required ICSR fields" in res_groceries.json()["detail"]
+
+
+def test_no_silent_fallback_on_missing_dataset(client):
+    """Requirement: Never silently fall back to default dataset when a custom dataset was specified."""
+    res = client.post("/api/generate", json={"file_path": "non_existent_study_dataset.csv", "llm_provider": "mock"})
+    assert res.status_code == 404
+    assert "not found on the server" in res.json()["detail"]
+
+
+def test_dataset_persistence_and_reset(client):
+    """Requirement: Uploaded dataset becomes and remains active until explicitly reset."""
+    csv_data = """case_number,event_date,serious_case,alert_case,country,patient_age,patient_sex,preferred_term,drug_name
+CASE-901,2024-04-01,1,1,FRA,42,Female,Steven-Johnson syndrome,Lamotrigine
+CASE-902,2024-04-05,0,0,DEU,35,Male,Pruritus,Lamotrigine
+"""
+    upload_res = client.post("/api/upload", files={"file": ("lamotrigine_safety.csv", io.BytesIO(csv_data.encode()), "text/csv")})
+    assert upload_res.status_code == 200
+    up_data = upload_res.json()
+    assert up_data["total_cases"] == 2
+    assert up_data["is_custom_dataset"] is True
+
+    # Check sample-data endpoint returns this active uploaded dataset
+    sample_res = client.get("/api/sample-data")
+    assert sample_res.status_code == 200
+    s_data = sample_res.json()
+    assert s_data["total_cases"] == 2
+    assert s_data["is_custom_dataset"] is True
+    assert "lamotrigine" in s_data["dataset_name"].lower()
+
+    # Generate report and verify report uses the custom dataset
+    gen_res = client.post("/api/generate", json={"llm_provider": "mock"})
+    assert gen_res.status_code == 200
+    g_data = gen_res.json()
+    assert g_data["is_custom_dataset"] is True
+    assert "lamotrigine" in g_data["dataset_analyzed"].lower()
+    assert g_data["product_name"] == "LAMOTRIGINE"
+
+    # Reset back to reference benchmark
+    reset_res = client.post("/api/dataset/reset")
+    assert reset_res.status_code == 200
+    sample_after_reset = client.get("/api/sample-data").json()
+    assert sample_after_reset["is_custom_dataset"] is False
+    assert sample_after_reset["total_cases"] == 1024

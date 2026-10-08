@@ -64,9 +64,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # In-memory storage for generated reports and active dataset
@@ -126,9 +128,14 @@ class RegenerateSectionRequest(BaseModel):
 
 
 def get_active_dataset_path(preferred_path: Optional[str] = None) -> str:
-    """Resolves the dataset path, prioritizing preferred path, active uploaded file, or falling back to sample."""
-    if preferred_path and os.path.exists(preferred_path):
-        return preferred_path
+    """Resolves the dataset path, strictly prioritizing preferred path, active uploaded file, or falling back to sample."""
+    if preferred_path:
+        if os.path.exists(preferred_path):
+            return preferred_path
+        raise HTTPException(
+            status_code=404,
+            detail=f"Specified uploaded dataset '{preferred_path}' was not found on the server. Please re-upload your dataset."
+        )
     if ACTIVE_DATASET_PATH and os.path.exists(ACTIVE_DATASET_PATH):
         return ACTIVE_DATASET_PATH
     if DEFAULT_SAMPLE_PATH.exists():
@@ -238,6 +245,7 @@ def get_sample_data_summary(file_path: Optional[str] = Query(None)):
 
     return {
         "dataset_name": Path(path).name,
+        "is_custom_dataset": bool(ACTIVE_DATASET_PATH is not None and path == ACTIVE_DATASET_PATH),
         "total_rows": len(df),
         "total_cases": vol.get("total_cases", 0),
         "serious_cases": vol.get("serious_cases", 0),
@@ -255,14 +263,29 @@ def get_sample_data_summary(file_path: Optional[str] = Query(None)):
 
 @app.post("/api/upload", tags=["Dataset"])
 async def upload_dataset(file: UploadFile = File(...)):
-    """Uploads an ICSR dataset (.xlsx or .csv), validates its schema, and sets it as the active dataset."""
+    """Uploads an ICSR dataset (.xlsx or .csv), validates its schema robustly, and sets it as the active dataset."""
     global ACTIVE_DATASET_PATH
-    if not (file.filename.endswith(".xlsx") or file.filename.endswith(".csv")):
-        raise HTTPException(status_code=400, detail="Only .xlsx and .csv files are supported.")
+    fname = (file.filename or "").lower()
+    if not (fname.endswith(".xlsx") or fname.endswith(".csv")):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Only ICSR datasets in .csv or .xlsx format are supported."
+        )
 
-    temp_file = OUTPUTS_DIR / f"uploaded_{int(datetime.now().timestamp())}_{file.filename}"
-    with open(temp_file, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # Read content to check for empty payload
+    content = await file.read()
+    if not content or len(content.strip()) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty dataset: The uploaded file is empty (0 bytes). Please provide an ICSR dataset with at least one record."
+        )
+
+    clean_filename = Path(file.filename).name
+    temp_file = OUTPUTS_DIR / f"uploaded_{int(datetime.now().timestamp())}_{clean_filename}"
+    try:
+        temp_file.write_bytes(content)
+    except Exception as io_err:
+        raise HTTPException(status_code=500, detail=f"Upload failure: Unable to write file to disk ({io_err}).")
 
     try:
         df = load_and_normalize_data(str(temp_file))
@@ -280,8 +303,9 @@ async def upload_dataset(file: UploadFile = File(...)):
 
         return {
             "status": "success",
-            "filename": file.filename,
+            "filename": clean_filename,
             "stored_path": str(temp_file),
+            "is_custom_dataset": True,
             "total_rows": len(df),
             "rows_count": len(df),
             "total_cases": vol.get("total_cases", 0),
@@ -297,10 +321,14 @@ async def upload_dataset(file: UploadFile = File(...)):
             "age_distribution": age,
             "validation_issues": issues
         }
+    except ValueError as ve:
+        if temp_file.exists():
+            temp_file.unlink()
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         if temp_file.exists():
             temp_file.unlink()
-        raise HTTPException(status_code=422, detail=f"Failed to parse ICSR dataset: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Backend processing failure: Unable to parse ICSR dataset. {str(e)}")
 
 
 @app.post("/api/dataset/reset", tags=["Dataset"])
@@ -362,6 +390,8 @@ def generate_report(req: GenerateRequest):
     assembler = ReportAssembler()
     markdown_content = assembler.to_markdown(report)
 
+    is_custom = bool(ACTIVE_DATASET_PATH and file_path == ACTIVE_DATASET_PATH) or bool(req.file_path and file_path == req.file_path)
+
     return {
         "status": "success",
         "report_id": report_id,
@@ -371,7 +401,9 @@ def generate_report(req: GenerateRequest):
         "total_sections": len(report.sections),
         "human_approved": report.evaluation.is_human_approved if report.evaluation else False,
         "markdown_preview": markdown_content[:1500] + "\n\n...(full document available at /api/reports/{id}/markdown)",
-        "report": report.model_dump()
+        "report": report.model_dump(),
+        "dataset_analyzed": Path(file_path).name,
+        "is_custom_dataset": is_custom
     }
 
 

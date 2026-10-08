@@ -109,10 +109,17 @@
 
           <!-- Upload Dropzone -->
           <div class="relative border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-lg p-4 text-center cursor-pointer transition mb-3" id="dropzone">
-            <input type="file" id="fileInput" accept=".xlsx,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
-            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
-            <p class="text-xs font-medium text-slate-700">Drop ICSR Excel / CSV here</p>
-            <p class="text-[10px] text-slate-400">or click to browse from device (automatic analysis)</p>
+            <input type="file" id="fileInput" accept=".xlsx,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileInputChange(event)">
+            <div id="dropzoneContent">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
+              <p class="text-xs font-medium text-slate-700">Drop ICSR Excel / CSV here</p>
+              <p class="text-[10px] text-slate-400">or click to browse from device (automatic analysis)</p>
+            </div>
+            <div id="dropzoneSpinner" class="hidden py-1">
+              <i class="fa-solid fa-spinner fa-spin text-2xl text-teal-600 mb-1"></i>
+              <p class="text-xs font-semibold text-teal-800" id="dropzoneSpinnerText">Uploading & validating ICSR dataset...</p>
+              <p class="text-[10px] text-teal-600">Checking ICSR safety columns & calculating metrics</p>
+            </div>
           </div>
 
           <!-- Dataset Live Statistics Pill -->
@@ -271,6 +278,7 @@
                 </span>
               </div>
               <p class="text-xs text-slate-500 mt-0.5" id="reportSubheader">Click "Run Regulatory Pipeline" to generate a fully grounded report.</p>
+              <div id="reportDatasetIndicator" class="mt-1"></div>
             </div>
             
             <div class="flex items-center space-x-2 no-print">
@@ -411,10 +419,10 @@
           <i class="fa-solid fa-bolt text-teal-600 mr-1.5"></i> 1-Click Evaluation Credentials:
         </p>
         <div class="flex space-x-2">
-          <button onclick="quickLoginDemo('doctor')" class="flex-1 py-1.5 px-2 bg-teal-700 hover:bg-teal-800 text-white rounded text-[11px] font-semibold transition flex items-center justify-center shadow-sm">
+          <button id="btnQuickDoc" onclick="quickLoginDemo('doctor')" class="flex-1 py-1.5 px-2 bg-teal-700 hover:bg-teal-800 text-white rounded text-[11px] font-semibold transition flex items-center justify-center shadow-sm">
             <i class="fa-solid fa-user-doctor mr-1"></i> Demo Doctor
           </button>
-          <button onclick="quickLoginDemo('analyst')" class="flex-1 py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-semibold transition flex items-center justify-center shadow-sm">
+          <button id="btnQuickAnalyst" onclick="quickLoginDemo('analyst')" class="flex-1 py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-semibold transition flex items-center justify-center shadow-sm">
             <i class="fa-solid fa-chart-line mr-1"></i> Demo Analyst
           </button>
         </div>
@@ -533,22 +541,50 @@
   </div>
 
 ﻿  <script>
-    // Configuration & State
-    let BACKEND_URL = localStorage.getItem("PADER_BACKEND_URL") || (window.location.origin.includes("github.io") ? "https://pader-regulatory-engine.onrender.com" : window.location.origin);
+    // Configuration & State with smart origin resolution
+    function getInitialBackendUrl() {
+      const saved = localStorage.getItem("PADER_BACKEND_URL");
+      if (saved && saved !== "null" && saved !== "undefined" && saved.trim() !== "") {
+        return saved.trim().replace(/\/+$/, "");
+      }
+      const origin = window.location.origin;
+      if (origin && origin.includes("github.io")) {
+        return "https://pader-regulatory-engine.onrender.com";
+      }
+      if (!origin || origin === "null" || origin.startsWith("file:") || origin.includes(":5500") || origin.includes(":3000") || origin.includes(":5173")) {
+        return "http://localhost:8000";
+      }
+      return origin.replace(/\/+$/, "");
+    }
+
+    let BACKEND_URL = getInitialBackendUrl();
     let authToken = localStorage.getItem("PV_AUTH_TOKEN") || null;
     let currentUser = null;
     let currentReportId = null;
     let currentReportData = null;
     let currentMarkdown = "";
-    let uploadedFilePath = null;
+    let uploadedFilePath = localStorage.getItem("PV_ACTIVE_DATASET_PATH") || null;
 
     document.getElementById("backendUrlInput").value = BACKEND_URL;
     document.getElementById("btnApiDocs").href = `${BACKEND_URL}/docs`;
 
-    // Initialize Connection & Auth Check
+    // Initialize Connection, Dropzone & Auth Check
     window.addEventListener("DOMContentLoaded", async () => {
+      setupDropzone();
       checkBackendHealth(true);
       await initAuth();
+
+      // Restore active uploaded dataset if stored in session
+      const savedStatsStr = localStorage.getItem("PV_ACTIVE_DATASET_STATS");
+      if (uploadedFilePath && savedStatsStr) {
+        try {
+          const stats = JSON.parse(savedStatsStr);
+          applyDatasetStatsToUI(stats, true);
+        } catch (_) {
+          localStorage.removeItem("PV_ACTIVE_DATASET_PATH");
+          localStorage.removeItem("PV_ACTIVE_DATASET_STATS");
+        }
+      }
     });
 
     async function checkBackendHealth(initial = false) {
@@ -560,7 +596,7 @@
       const startTime = performance.now();
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         const res = await fetch(`${BACKEND_URL}/api/health`, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -726,8 +762,18 @@
     }
 
     async function quickLoginDemo(role) {
-      const username = role === "doctor" ? "doctor@pharmavigil.org" : "analyst@pharmavigil.org";
-      const password = role === "doctor" ? "doctor123" : "analyst123";
+      const isDoc = role === "doctor";
+      const username = isDoc ? "doctor@pharmavigil.org" : "analyst@pharmavigil.org";
+      const password = isDoc ? "doctor123" : "analyst123";
+
+      const btnId = isDoc ? "btnQuickDoc" : "btnQuickAnalyst";
+      const btn = document.getElementById(btnId);
+      const originalHtml = btn ? btn.innerHTML : "";
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Authenticating...`;
+      }
 
       try {
         const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
@@ -735,16 +781,41 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password })
         });
-        if (!res.ok) throw new Error(await res.text());
+
+        if (!res.ok) {
+          let errDetail = "Authentication failed.";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (_) {
+            errDetail = await res.text() || errDetail;
+          }
+          if (res.status === 401) {
+            throw new Error(`Doctor authentication failed: Invalid credentials. Please check the demo doctor account.`);
+          } else {
+            throw new Error(`Server returned an authentication error (${res.status}): ${errDetail}`);
+          }
+        }
+
         const data = await res.json();
         authToken = data.token;
         currentUser = data.user;
         localStorage.setItem("PV_AUTH_TOKEN", authToken);
         updateAuthUI();
         toggleAuthModal();
-        alert(`Signed in as ${currentUser.full_name} (${currentUser.role.toUpperCase()})`);
+        alert(`Signed in successfully as ${currentUser.full_name} (${currentUser.role.toUpperCase()})!\nMedical License: ${currentUser.medical_license || 'N/A'}`);
       } catch (err) {
-        alert("Demo login error: " + err.message);
+        console.error("Demo login error:", err);
+        let userMsg = err.message;
+        if (err instanceof TypeError || (err.message && err.message.toLowerCase().includes("failed to fetch"))) {
+          userMsg = `Unable to connect to the backend server at ${BACKEND_URL}.\n\nPossible causes:\n1. The backend server is not running (start it with: python app.py).\n2. If using the cloud backend on Render, it may be waking up from sleep. Please wait a moment and try again.\n3. You can configure the backend URL using the settings button in the top bar.`;
+        }
+        alert(userMsg);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     }
 
@@ -910,6 +981,11 @@
 
     async function resetToSampleData() {
       try {
+        uploadedFilePath = null;
+        localStorage.removeItem("PV_ACTIVE_DATASET_PATH");
+        localStorage.removeItem("PV_ACTIVE_DATASET_NAME");
+        localStorage.removeItem("PV_ACTIVE_DATASET_STATS");
+
         await fetch(`${BACKEND_URL}/api/dataset/reset`, { method: "POST" });
         await loadSampleData();
       } catch (err) {
@@ -917,30 +993,118 @@
       }
     }
 
-    async function handleFileUpload(e) {
-      const file = e.target.files[0];
+    function setupDropzone() {
+      const dz = document.getElementById("dropzone");
+      if (!dz) return;
+
+      dz.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.classList.add("border-teal-500", "bg-teal-50/50");
+      });
+
+      dz.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.classList.remove("border-teal-500", "bg-teal-50/50");
+      });
+
+      dz.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.classList.remove("border-teal-500", "bg-teal-50/50");
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          uploadSelectedFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    function handleFileInputChange(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        uploadSelectedFile(e.target.files[0]);
+      }
+    }
+
+    async function uploadSelectedFile(file) {
       if (!file) return;
+
+      const fname = (file.name || "").toLowerCase();
+      if (!fname.endsWith(".csv") && !fname.endsWith(".xlsx")) {
+        alert("Invalid file type: Only ICSR datasets in .csv or .xlsx format are supported.");
+        return;
+      }
+
+      if (file.size === 0) {
+        alert("Empty dataset: The selected file contains 0 bytes. Please provide an ICSR dataset with at least one record.");
+        return;
+      }
+
+      const dzContent = document.getElementById("dropzoneContent");
+      const dzSpinner = document.getElementById("dropzoneSpinner");
+      if (dzContent) dzContent.classList.add("hidden");
+      if (dzSpinner) dzSpinner.classList.remove("hidden");
 
       const fd = new FormData();
       fd.append("file", file);
 
       try {
-        const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: fd });
-        if (!res.ok) throw new Error(await res.text());
+        const res = await fetch(`${BACKEND_URL}/api/upload`, {
+          method: "POST",
+          body: fd
+        });
+
+        if (!res.ok) {
+          let errDetail = "Dataset upload failed. Please try again.";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (_) {
+            errDetail = await res.text() || errDetail;
+          }
+          throw new Error(errDetail);
+        }
+
         const data = await res.json();
         uploadedFilePath = data.stored_path;
 
-        // Immediately update all dataset statistics cards in UI
-        document.getElementById("statDatasetName").innerText = data.filename;
-        document.getElementById("statCaseCount").innerText = `${data.total_cases.toLocaleString()} cases`;
-        document.getElementById("statSeriousCount").innerText = `${data.serious_percentage}% (${data.serious_cases.toLocaleString()})`;
-        document.getElementById("statAlertCount").innerText = `${data.expedited_alerts.toLocaleString()} alerts`;
-        document.getElementById("datasetBadge").innerText = "Custom Dataset Active";
-        document.getElementById("datasetBadge").className = "text-xs text-emerald-700 font-semibold";
+        // Persist active uploaded dataset in localStorage
+        localStorage.setItem("PV_ACTIVE_DATASET_PATH", data.stored_path);
+        localStorage.setItem("PV_ACTIVE_DATASET_NAME", data.filename);
+        localStorage.setItem("PV_ACTIVE_DATASET_STATS", JSON.stringify(data));
 
-        alert(`Uploaded and analyzed dataset: ${data.filename}\n- ${data.total_cases.toLocaleString()} Cases\n- ${data.serious_cases.toLocaleString()} Serious (${data.serious_percentage}%)\n- ${data.expedited_alerts.toLocaleString()} 15-day alerts\nReady to generate report.`);
+        // Update UI
+        applyDatasetStatsToUI(data, true);
+
+        alert(`Dataset successfully uploaded & activated for analysis!\n\nFile: ${data.filename}\nCases: ${data.total_cases.toLocaleString()}\nSerious: ${data.serious_percentage}% (${data.serious_cases.toLocaleString()})\nAlerts: ${data.expedited_alerts.toLocaleString()}\n\nClick 'Run Regulatory Pipeline' to analyze this uploaded dataset.`);
       } catch (err) {
-        alert("Upload error: " + err.message);
+        console.error("Upload error:", err);
+        let userMsg = err.message;
+        if (err instanceof TypeError || (err.message && err.message.toLowerCase().includes("failed to fetch"))) {
+          userMsg = `Unable to connect to the backend server at ${BACKEND_URL}. Please ensure the backend is running.`;
+        }
+        alert(userMsg);
+      } finally {
+        if (dzContent) dzContent.classList.remove("hidden");
+        if (dzSpinner) dzSpinner.classList.add("hidden");
+        const fi = document.getElementById("fileInput");
+        if (fi) fi.value = "";
+      }
+    }
+
+    function applyDatasetStatsToUI(data, isCustom) {
+      document.getElementById("statDatasetName").innerText = data.filename + (isCustom ? " (Uploaded)" : "");
+      document.getElementById("statDatasetName").title = data.filename;
+      document.getElementById("statCaseCount").innerText = `${data.total_cases.toLocaleString()} cases`;
+      document.getElementById("statSeriousCount").innerText = `${data.serious_percentage}% (${data.serious_cases.toLocaleString()})`;
+      document.getElementById("statAlertCount").innerText = `${data.expedited_alerts.toLocaleString()} alerts`;
+
+      const badge = document.getElementById("datasetBadge");
+      if (isCustom) {
+        badge.innerText = "Custom Dataset Active";
+        badge.className = "text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300";
+      } else {
+        badge.innerText = "Reference Ready";
+        badge.className = "text-xs text-slate-500 font-medium";
       }
     }
 
@@ -1002,7 +1166,21 @@
 
     function updateReportUI(data) {
       const ev = data.evaluation;
+      const isCustom = data.is_custom_dataset;
+      const dsName = data.dataset_analyzed || (isCustom ? "User-Uploaded Dataset" : "Reference Benchmark");
+
       document.getElementById("currentReportTitle").innerText = data.report_id;
+
+      // Update active dataset indicator badge above report
+      const dsBadgeContainer = document.getElementById("reportDatasetIndicator");
+      if (dsBadgeContainer) {
+        dsBadgeContainer.innerHTML = `
+          <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${isCustom ? 'bg-emerald-50 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700 border border-slate-300'}">
+            <i class="fa-solid ${isCustom ? 'fa-file-csv text-emerald-600' : 'fa-database text-slate-500'} mr-1.5"></i>
+            Analyzed Dataset: <span class="font-bold ml-1">${dsName}</span> &nbsp;(${isCustom ? 'User-Uploaded ICSR Dataset' : 'FDA Benchmark Reference'})
+          </div>
+        `;
+      }
       document.getElementById("reportSubheader").innerText = `Product: ${currentReportData.metadata.product_name} • Period: ${currentReportData.metadata.reporting_period_start} to ${currentReportData.metadata.reporting_period_end}`;
       
       const badge = document.getElementById("statusBadge");

@@ -543,15 +543,25 @@
 ﻿  <script>
     // Configuration & State with smart origin resolution
     function getInitialBackendUrl() {
+      const isHttpsPage = window.location.protocol === "https:";
+      const isGithubIo = window.location.origin && window.location.origin.includes("github.io");
+
       const saved = localStorage.getItem("PADER_BACKEND_URL");
       if (saved && saved !== "null" && saved !== "undefined" && saved.trim() !== "") {
-        return saved.trim().replace(/\/+$/, "");
+        const cleanSaved = saved.trim().replace(/\/+$/, "");
+        if (isHttpsPage && cleanSaved.startsWith("http://")) {
+          console.warn("Ignoring saved HTTP backend on HTTPS page due to browser mixed content security rules:", cleanSaved);
+        } else {
+          return cleanSaved;
+        }
       }
-      const origin = window.location.origin;
-      if (origin && origin.includes("github.io")) {
+
+      if (isGithubIo || isHttpsPage) {
         return "https://pader-regulatory-engine.onrender.com";
       }
-      if (!origin || origin === "null" || origin.startsWith("file:") || origin.includes(":5500") || origin.includes(":3000") || origin.includes(":5173")) {
+
+      const origin = window.location.origin;
+      if (!origin || origin === "null" || origin.startsWith("file:") || origin.includes(":5500") || origin.includes(":3000") || origin.includes(":5173") || origin.includes(":8080")) {
         return "http://localhost:8000";
       }
       return origin.replace(/\/+$/, "");

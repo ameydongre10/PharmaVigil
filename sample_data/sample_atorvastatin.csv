@@ -1,0 +1,61 @@
+safety_report_id,received_date,serious,alert,occur_country,age,gender,adverse_event,outcome,medicinal_product
+ATOR-2024-0001,2024-001-01,0,1,USA,45,Male,Rhabdomyolysis,Recovered,ATORVASTATIN
+ATOR-2024-0002,2024-002-02,1,0,GBR,47,Female,Myalgia,Recovering,ATORVASTATIN
+ATOR-2024-0003,2024-003-03,1,0,DEU,49,Male,Blood creatine phosphokinase increased,Not recovered,ATORVASTATIN
+ATOR-2024-0004,2024-004-04,0,0,ESP,51,Female,Hepatic failure,Fatal,ATORVASTATIN
+ATOR-2024-0005,2024-005-05,1,1,ITA,53,Male,Alanine aminotransferase increased,Unknown,ATORVASTATIN
+ATOR-2024-0006,2024-006-06,1,0,AUS,55,Female,Asthenia,Recovered,ATORVASTATIN
+ATOR-2024-0007,2024-001-07,0,0,USA,57,Male,Muscle spasms,Recovering,ATORVASTATIN
+ATOR-2024-0008,2024-002-08,1,0,GBR,59,Female,Immune-mediated necrotizing myopathy,Not recovered,ATORVASTATIN
+ATOR-2024-0009,2024-003-09,1,1,DEU,61,Male,Headache,Fatal,ATORVASTATIN
+ATOR-2024-0010,2024-004-10,0,0,ESP,63,Female,Jaundice,Unknown,ATORVASTATIN
+ATOR-2024-0011,2024-005-11,1,0,ITA,65,Male,Rhabdomyolysis,Recovered,ATORVASTATIN
+ATOR-2024-0012,2024-006-12,1,0,AUS,67,Female,Myalgia,Recovering,ATORVASTATIN
+ATOR-2024-0013,2024-001-13,0,1,USA,69,Male,Blood creatine phosphokinase increased,Not recovered,ATORVASTATIN
+ATOR-2024-0014,2024-002-14,1,0,GBR,71,Female,Hepatic failure,Fatal,ATORVASTATIN
+ATOR-2024-0015,2024-003-15,1,0,DEU,73,Male,Alanine aminotransferase increased,Unknown,ATORVASTATIN
+ATOR-2024-0016,2024-004-16,0,0,ESP,75,Female,Asthenia,Recovered,ATORVASTATIN
+ATOR-2024-0017,2024-005-17,1,1,ITA,77,Male,Muscle spasms,Recovering,ATORVASTATIN
+ATOR-2024-0018,2024-006-18,1,0,AUS,79,Female,Immune-mediated necrotizing myopathy,Not recovered,ATORVASTATIN
+ATOR-2024-0019,2024-001-19,0,0,USA,81,Male,Headache,Fatal,ATORVASTATIN
+ATOR-2024-0020,2024-002-20,1,0,GBR,83,Female,Jaundice,Unknown,ATORVASTATIN
+ATOR-2024-0021,2024-003-01,1,1,DEU,45,Male,Rhabdomyolysis,Recovered,ATORVASTATIN
+ATOR-2024-0022,2024-004-02,0,0,ESP,47,Female,Myalgia,Recovering,ATORVASTATIN
+ATOR-2024-0023,2024-005-03,1,0,ITA,49,Male,Blood creatine phosphokinase increased,Not recovered,ATORVASTATIN
+ATOR-2024-0024,2024-006-04,1,0,AUS,51,Female,Hepatic failure,Fatal,ATORVASTATIN
+ATOR-2024-0025,2024-001-05,0,1,USA,53,Male,Alanine aminotransferase increased,Unknown,ATORVASTATIN
+ATOR-2024-0026,2024-002-06,1,0,GBR,55,Female,Asthenia,Recovered,ATORVASTATIN
+ATOR-2024-0027,2024-003-07,1,0,DEU,57,Male,Muscle spasms,Recovering,ATORVASTATIN
+ATOR-2024-0028,2024-004-08,0,0,ESP,59,Female,Immune-mediated necrotizing myopathy,Not recovered,ATORVASTATIN
+ATOR-2024-0029,2024-005-09,1,1,ITA,61,Male,Headache,Fatal,ATORVASTATIN
+ATOR-2024-0030,2024-006-10,1,0,AUS,63,Female,Jaundice,Unknown,ATORVASTATIN
+ATOR-2024-0031,2024-001-11,0,0,USA,65,Male,Rhabdomyolysis,Recovered,ATORVASTATIN
+ATOR-2024-0032,2024-002-12,1,0,GBR,67,Female,Myalgia,Recovering,ATORVASTATIN
+ATOR-2024-0033,2024-003-13,1,1,DEU,69,Male,Blood creatine phosphokinase increased,Not recovered,ATORVASTATIN
+ATOR-2024-0034,2024-004-14,0,0,ESP,71,Female,Hepatic failure,Fatal,ATORVASTATIN
+ATOR-2024-0035,2024-005-15,1,0,ITA,73,Male,Alanine aminotransferase increased,Unknown,ATORVASTATIN
+ATOR-2024-0036,2024-006-16,1,0,AUS,75,Female,Asthenia,Recovered,ATORVASTATIN
+ATOR-2024-0037,2024-001-17,0,1,USA,77,Male,Muscle spasms,Recovering,ATORVASTATIN
+ATOR-2024-0038,2024-002-18,1,0,GBR,79,Female,Immune-mediated necrotizing myopathy,Not recovered,ATORVASTATIN
+ATOR-2024-0039,2024-003-19,1,0,DEU,81,Male,Headache,Fatal,ATORVASTATIN
+ATOR-2024-0040,2024-004-20,0,0,ESP,83,Female,Jaundice,Unknown,ATORVASTATIN
+ATOR-2024-0041,2024-005-01,1,1,ITA,45,Male,Rhabdomyolysis,Recovered,ATORVASTATIN
+ATOR-2024-0042,2024-006-02,1,0,AUS,47,Female,Myalgia,Recovering,ATORVASTATIN
+ATOR-2024-0043,2024-001-03,0,0,USA,49,Male,Blood creatine phosphokinase increased,Not recovered,ATORVASTATIN
+ATOR-2024-0044,2024-002-04,1,0,GBR,51,Female,Hepatic failure,Fatal,ATORVASTATIN
+ATOR-2024-0045,2024-003-05,1,1,DEU,53,Male,Alanine aminotransferase increased,Unknown,ATORVASTATIN
+ATOR-2024-0046,2024-004-06,0,0,ESP,55,Female,Asthenia,Recovered,ATORVASTATIN
+ATOR-2024-0047,2024-005-07,1,0,ITA,57,Male,Muscle spasms,Recovering,ATORVASTATIN
+ATOR-2024-0048,2024-006-08,1,0,AUS,59,Female,Immune-mediated necrotizing myopathy,Not recovered,ATORVASTATIN
+ATOR-2024-0049,2024-001-09,0,1,USA,61,Male,Headache,Fatal,ATORVASTATIN
+ATOR-2024-0050,2024-002-10,1,0,GBR,63,Female,Jaundice,Unknown,ATORVASTATIN
+ATOR-2024-0051,2024-003-11,1,0,DEU,65,Male,Rhabdomyolysis,Recovered,ATORVASTATIN
+ATOR-2024-0052,2024-004-12,0,0,ESP,67,Female,Myalgia,Recovering,ATORVASTATIN
+ATOR-2024-0053,2024-005-13,1,1,ITA,69,Male,Blood creatine phosphokinase increased,Not recovered,ATORVASTATIN
+ATOR-2024-0054,2024-006-14,1,0,AUS,71,Female,Hepatic failure,Fatal,ATORVASTATIN
+ATOR-2024-0055,2024-001-15,0,0,USA,73,Male,Alanine aminotransferase increased,Unknown,ATORVASTATIN
+ATOR-2024-0056,2024-002-16,1,0,GBR,75,Female,Asthenia,Recovered,ATORVASTATIN
+ATOR-2024-0057,2024-003-17,1,1,DEU,77,Male,Muscle spasms,Recovering,ATORVASTATIN
+ATOR-2024-0058,2024-004-18,0,0,ESP,79,Female,Immune-mediated necrotizing myopathy,Not recovered,ATORVASTATIN
+ATOR-2024-0059,2024-005-19,1,0,ITA,81,Male,Headache,Fatal,ATORVASTATIN
+ATOR-2024-0060,2024-006-20,1,0,AUS,83,Female,Jaundice,Unknown,ATORVASTATIN

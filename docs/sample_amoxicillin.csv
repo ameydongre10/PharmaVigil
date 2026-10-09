@@ -1,0 +1,51 @@
+safety_report_id,received_date,serious,alert,occur_country,age,gender,adverse_event,outcome,medicinal_product
+AMOX-2024-0001,2024-001-01,1,1,USA,20,Female,Anaphylactic reaction,Recovered,AMOXICILLIN
+AMOX-2024-0002,2024-002-02,0,0,GBR,23,Male,Urticaria,Recovering,AMOXICILLIN
+AMOX-2024-0003,2024-003-03,1,0,FRA,26,Female,Rash maculo-papular,Not recovered,AMOXICILLIN
+AMOX-2024-0004,2024-004-04,0,1,DEU,29,Male,Dyspnoea,Fatal,AMOXICILLIN
+AMOX-2024-0005,2024-005-05,1,0,CAN,32,Female,Angioedema,Unknown,AMOXICILLIN
+AMOX-2024-0006,2024-001-06,0,0,JPN,35,Male,Pruritus,Recovered,AMOXICILLIN
+AMOX-2024-0007,2024-002-07,1,1,USA,38,Female,Toxic epidermal necrolysis,Recovering,AMOXICILLIN
+AMOX-2024-0008,2024-003-08,0,0,GBR,41,Male,Nausea,Not recovered,AMOXICILLIN
+AMOX-2024-0009,2024-004-09,1,0,FRA,44,Female,Stevens-Johnson syndrome,Fatal,AMOXICILLIN
+AMOX-2024-0010,2024-005-10,0,1,DEU,47,Male,Serum sickness-like reaction,Unknown,AMOXICILLIN
+AMOX-2024-0011,2024-001-11,1,0,CAN,50,Female,Anaphylactic reaction,Recovered,AMOXICILLIN
+AMOX-2024-0012,2024-002-12,0,0,JPN,53,Male,Urticaria,Recovering,AMOXICILLIN
+AMOX-2024-0013,2024-003-13,1,1,USA,56,Female,Rash maculo-papular,Not recovered,AMOXICILLIN
+AMOX-2024-0014,2024-004-14,0,0,GBR,59,Male,Dyspnoea,Fatal,AMOXICILLIN
+AMOX-2024-0015,2024-005-15,1,0,FRA,62,Female,Angioedema,Unknown,AMOXICILLIN
+AMOX-2024-0016,2024-001-16,0,1,DEU,65,Male,Pruritus,Recovered,AMOXICILLIN
+AMOX-2024-0017,2024-002-17,1,0,CAN,68,Female,Toxic epidermal necrolysis,Recovering,AMOXICILLIN
+AMOX-2024-0018,2024-003-18,0,0,JPN,71,Male,Nausea,Not recovered,AMOXICILLIN
+AMOX-2024-0019,2024-004-19,1,1,USA,74,Female,Stevens-Johnson syndrome,Fatal,AMOXICILLIN
+AMOX-2024-0020,2024-005-20,0,0,GBR,77,Male,Serum sickness-like reaction,Unknown,AMOXICILLIN
+AMOX-2024-0021,2024-001-21,1,0,FRA,20,Female,Anaphylactic reaction,Recovered,AMOXICILLIN
+AMOX-2024-0022,2024-002-22,0,1,DEU,23,Male,Urticaria,Recovering,AMOXICILLIN
+AMOX-2024-0023,2024-003-23,1,0,CAN,26,Female,Rash maculo-papular,Not recovered,AMOXICILLIN
+AMOX-2024-0024,2024-004-24,0,0,JPN,29,Male,Dyspnoea,Fatal,AMOXICILLIN
+AMOX-2024-0025,2024-005-25,1,1,USA,32,Female,Angioedema,Unknown,AMOXICILLIN
+AMOX-2024-0026,2024-001-01,0,0,GBR,35,Male,Pruritus,Recovered,AMOXICILLIN
+AMOX-2024-0027,2024-002-02,1,0,FRA,38,Female,Toxic epidermal necrolysis,Recovering,AMOXICILLIN
+AMOX-2024-0028,2024-003-03,0,1,DEU,41,Male,Nausea,Not recovered,AMOXICILLIN
+AMOX-2024-0029,2024-004-04,1,0,CAN,44,Female,Stevens-Johnson syndrome,Fatal,AMOXICILLIN
+AMOX-2024-0030,2024-005-05,0,0,JPN,47,Male,Serum sickness-like reaction,Unknown,AMOXICILLIN
+AMOX-2024-0031,2024-001-06,1,1,USA,50,Female,Anaphylactic reaction,Recovered,AMOXICILLIN
+AMOX-2024-0032,2024-002-07,0,0,GBR,53,Male,Urticaria,Recovering,AMOXICILLIN
+AMOX-2024-0033,2024-003-08,1,0,FRA,56,Female,Rash maculo-papular,Not recovered,AMOXICILLIN
+AMOX-2024-0034,2024-004-09,0,1,DEU,59,Male,Dyspnoea,Fatal,AMOXICILLIN
+AMOX-2024-0035,2024-005-10,1,0,CAN,62,Female,Angioedema,Unknown,AMOXICILLIN
+AMOX-2024-0036,2024-001-11,0,0,JPN,65,Male,Pruritus,Recovered,AMOXICILLIN
+AMOX-2024-0037,2024-002-12,1,1,USA,68,Female,Toxic epidermal necrolysis,Recovering,AMOXICILLIN
+AMOX-2024-0038,2024-003-13,0,0,GBR,71,Male,Nausea,Not recovered,AMOXICILLIN
+AMOX-2024-0039,2024-004-14,1,0,FRA,74,Female,Stevens-Johnson syndrome,Fatal,AMOXICILLIN
+AMOX-2024-0040,2024-005-15,0,1,DEU,77,Male,Serum sickness-like reaction,Unknown,AMOXICILLIN
+AMOX-2024-0041,2024-001-16,1,0,CAN,20,Female,Anaphylactic reaction,Recovered,AMOXICILLIN
+AMOX-2024-0042,2024-002-17,0,0,JPN,23,Male,Urticaria,Recovering,AMOXICILLIN
+AMOX-2024-0043,2024-003-18,1,1,USA,26,Female,Rash maculo-papular,Not recovered,AMOXICILLIN
+AMOX-2024-0044,2024-004-19,0,0,GBR,29,Male,Dyspnoea,Fatal,AMOXICILLIN
+AMOX-2024-0045,2024-005-20,1,0,FRA,32,Female,Angioedema,Unknown,AMOXICILLIN
+AMOX-2024-0046,2024-001-21,0,1,DEU,35,Male,Pruritus,Recovered,AMOXICILLIN
+AMOX-2024-0047,2024-002-22,1,0,CAN,38,Female,Toxic epidermal necrolysis,Recovering,AMOXICILLIN
+AMOX-2024-0048,2024-003-23,0,0,JPN,41,Male,Nausea,Not recovered,AMOXICILLIN
+AMOX-2024-0049,2024-004-24,1,1,USA,44,Female,Stevens-Johnson syndrome,Fatal,AMOXICILLIN
+AMOX-2024-0050,2024-005-25,0,0,GBR,47,Male,Serum sickness-like reaction,Unknown,AMOXICILLIN

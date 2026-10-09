@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: pader-regulatory-engine
+    name: pharmavigil
     runtime: python
     plan: free
     region: oregon

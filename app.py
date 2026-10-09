@@ -4,7 +4,7 @@ FastAPI Regulatory PADER Generation & Human Review Backend.
 Provides:
 1. REST API for dataset upload, deterministic analytics, grounded LLM generation,
    grounding verification, and human review sign-off.
-2. Complete interactive Regulatory Pharmacovigilance Web Dashboard at `/`.
+2. Root API status probe at `/` and health probe at `/api/health`.
 3. Auto-generated OpenAPI / Swagger docs at `/docs` and ReDoc at `/redoc`.
 """
 
@@ -602,12 +602,27 @@ def get_report_verification_details(report_id: str):
 
 
 # ===========================================================================
-# INTERACTIVE REGULATORY DASHBOARD UI (Serves index.html from disk)
+# BACKEND API ROOT & OPTIONAL DASHBOARD ROUTES
 # ===========================================================================
 
-@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse, tags=["Dashboard"])
+@app.api_route("/", methods=["GET", "HEAD"], tags=["System"])
+def root():
+    """Backend API root endpoint providing service status and API links."""
+    return {
+        "status": "online",
+        "service": "PharmaVigil Regulatory Report Engine Backend API",
+        "version": "1.0.0",
+        "message": "PharmaVigil FastAPI Backend is active and running.",
+        "docs_url": "/docs",
+        "redoc_url": "/redoc",
+        "health_check": "/api/health",
+        "frontend_url": "https://ameydongre10.github.io/PharmaVigil/"
+    }
+
+
+@app.api_route("/dashboard", methods=["GET", "HEAD"], response_class=HTMLResponse, tags=["Dashboard"])
 def serve_dashboard():
-    """Serves the modern, self-contained regulatory PADER dashboard."""
+    """Serves the standalone regulatory dashboard UI if accessed directly."""
     index_file = BASE_DIR / "index.html"
     if index_file.exists():
         return HTMLResponse(content=index_file.read_text(encoding="utf-8"))

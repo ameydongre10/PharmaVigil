@@ -76,8 +76,18 @@ def test_human_review_sign_off(client):
     assert rev_data["review_record"]["reviewer_name"] == "Dr. Sarah Connor, Chief Medical Officer"
 
 
-def test_serve_dashboard_html(client):
+def test_root_backend_status(client):
     response = client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "online"
+    assert "service" in data
+    assert data["docs_url"] == "/docs"
+    assert data["health_check"] == "/api/health"
+
+
+def test_serve_dashboard_html(client):
+    response = client.get("/dashboard")
     assert response.status_code == 200
     assert "GenAR PADER Regulatory Report Engine" in response.text
     assert "<!DOCTYPE html>" in response.text

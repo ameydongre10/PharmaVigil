@@ -515,11 +515,14 @@
           <input type="text" id="backendUrlInput" value="https://pader-regulatory-engine.onrender.com" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
         </div>
 
-        <div class="flex space-x-2">
-          <button onclick="setBackendPreset('https://pader-regulatory-engine.onrender.com')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">
-            Render Production
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="setBackendPreset('https://pharmavigil.onrender.com')" class="py-1.5 px-2 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded text-[11px] font-semibold transition text-center">
+            Render (PharmaVigil)
           </button>
-          <button onclick="setBackendPreset('http://localhost:8000')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">
+          <button onclick="setBackendPreset('https://pader-regulatory-engine.onrender.com')" class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition text-center">
+            Render (Legacy)
+          </button>
+          <button onclick="setBackendPreset('http://localhost:8000')" class="col-span-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition text-center">
             Localhost:8000
           </button>
         </div>

@@ -1057,14 +1057,34 @@
       if (dzContent) dzContent.classList.add("hidden");
       if (dzSpinner) dzSpinner.classList.remove("hidden");
 
+      const spinnerText = document.getElementById("dropzoneSpinnerText");
+      if (spinnerText) spinnerText.innerText = "Uploading & validating ICSR dataset...";
+
       const fd = new FormData();
       fd.append("file", file);
 
+      const headers = {};
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      let res;
       try {
-        const res = await fetch(`${BACKEND_URL}/api/upload`, {
-          method: "POST",
-          body: fd
-        });
+        try {
+          res = await fetch(`${BACKEND_URL}/api/upload`, {
+            method: "POST",
+            headers: headers,
+            body: fd
+          });
+        } catch (initialErr) {
+          if (spinnerText) spinnerText.innerText = "Connecting to backend (waking up service)...";
+          await new Promise(r => setTimeout(r, 2500));
+          res = await fetch(`${BACKEND_URL}/api/upload`, {
+            method: "POST",
+            headers: headers,
+            body: fd
+          });
+        }
 
         if (!res.ok) {
           let errDetail = "Dataset upload failed. Please try again.";
@@ -1093,12 +1113,13 @@
         console.error("Upload error:", err);
         let userMsg = err.message;
         if (err instanceof TypeError || (err.message && err.message.toLowerCase().includes("failed to fetch"))) {
-          userMsg = `Unable to connect to the backend server at ${BACKEND_URL}. Please ensure the backend is running.`;
+          userMsg = `Unable to connect to the backend server at ${BACKEND_URL}.\n\nPossible causes:\n1. The cloud server on Render was waking up from sleep or completing a deployment.\n2. Please wait 10-15 seconds and try uploading again.`;
         }
         alert(userMsg);
       } finally {
         if (dzContent) dzContent.classList.remove("hidden");
         if (dzSpinner) dzSpinner.classList.add("hidden");
+        if (spinnerText) spinnerText.innerText = "Uploading & validating ICSR dataset...";
         const fi = document.getElementById("fileInput");
         if (fi) fi.value = "";
       }

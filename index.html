@@ -788,12 +788,23 @@
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Authenticating...`;
       }
 
+      let res;
       try {
-        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
+        try {
+          res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+        } catch (initialErr) {
+          if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Waking server...`;
+          await new Promise(r => setTimeout(r, 2500));
+          res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+        }
 
         if (!res.ok) {
           let errDetail = "Authentication failed.";

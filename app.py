@@ -63,9 +63,14 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=r".*",
-    allow_credentials=True,
+    # A wildcard origin combined with credentials is rejected by browsers and
+    # makes credentialed API access available to arbitrary websites.
+    allow_origins=[
+        "https://ameydongre10.github.io",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -85,9 +90,9 @@ ACTIVE_DATASET_PATH: Optional[str] = None
 
 
 class RegisterRequest(BaseModel):
-    username: str = Field(..., description="Unique username or email")
+    username: str = Field(..., min_length=1, description="Unique username or email")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
-    full_name: str = Field(..., description="Full Name and medical title")
+    full_name: str = Field(..., min_length=1, description="Full Name and medical title")
     role: str = Field("doctor", description="Role: doctor, verifier, or analyst")
     email: Optional[str] = None
     medical_license: Optional[str] = Field(None, description="Medical registration/license number (required for doctors)")
@@ -101,7 +106,7 @@ class LoginRequest(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    file_path: Optional[str] = Field(None, description="Path to uploaded or sample dataset (.xlsx or .csv)")
+    file_path: Optional[str] = Field(None, description="Path to an uploaded dataset returned by this server")
     llm_provider: Optional[str] = Field("mock", description="LLM provider: mock, openai, gemini, anthropic, or generic")
     api_key: Optional[str] = Field(None, description="LLM API key (if live generation is selected)")
     model_name: Optional[str] = Field("gpt-4o-mini", description="LLM model identifier")
@@ -244,7 +249,7 @@ def get_sample_data_summary(file_path: Optional[str] = Query(None)):
     preview_cols = [c for c in ["safetyreportid", "receivedate", "serious_bool", "standard_country", "patient_reaction_reactionmeddrapt"] if c in df.columns]
 
     return {
-        "dataset_name": Path(path).name,
+        "dataset_name": getattr(app.state, "active_dataset_name", None) if path == ACTIVE_DATASET_PATH else Path(path).name,
         "is_custom_dataset": bool(ACTIVE_DATASET_PATH is not None and path == ACTIVE_DATASET_PATH),
         "total_rows": len(df),
         "total_cases": vol.get("total_cases", 0),
@@ -272,20 +277,30 @@ async def upload_dataset(file: UploadFile = File(...)):
             detail="Invalid file type. Only ICSR datasets in .csv or .xlsx format are supported."
         )
 
-    # Read content to check for empty payload
-    content = await file.read()
-    if not content or len(content.strip()) == 0:
+    # Bound memory and disk use for unauthenticated uploads. Read one extra
+    # byte so oversized payloads are rejected without buffering them in full.
+    max_upload_bytes = 25 * 1024 * 1024
+    content = await file.read(max_upload_bytes + 1)
+    if len(content) > max_upload_bytes:
+        raise HTTPException(status_code=413, detail="Dataset file exceeds the 25 MiB upload limit.")
+    if not content or not content.strip():
         raise HTTPException(
             status_code=400,
             detail="Empty dataset: The uploaded file is empty (0 bytes). Please provide an ICSR dataset with at least one record."
         )
 
     clean_filename = Path(file.filename).name
-    temp_file = OUTPUTS_DIR / f"uploaded_{int(datetime.now().timestamp())}_{clean_filename}"
+    # Use an unpredictable server-controlled name rather than trusting client
+    # filenames; concurrent uploads with the same name must not overwrite.
+    suffix = ".xlsx" if fname.endswith(".xlsx") else ".csv"
+    fd, temp_path = tempfile.mkstemp(prefix="uploaded_", suffix=suffix, dir=OUTPUTS_DIR)
+    os.close(fd)
+    temp_file = Path(temp_path)
     try:
         temp_file.write_bytes(content)
-    except Exception as io_err:
-        raise HTTPException(status_code=500, detail=f"Upload failure: Unable to write file to disk ({io_err}).")
+    except Exception:
+        temp_file.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail="Upload failure: unable to write file to disk.")
 
     try:
         df = load_and_normalize_data(str(temp_file))
@@ -300,6 +315,7 @@ async def upload_dataset(file: UploadFile = File(...)):
         age = engine.get_age_distribution().value
 
         ACTIVE_DATASET_PATH = str(temp_file)
+        app.state.active_dataset_name = clean_filename
 
         return {
             "status": "success",
@@ -322,12 +338,10 @@ async def upload_dataset(file: UploadFile = File(...)):
             "validation_issues": issues
         }
     except ValueError as ve:
-        if temp_file.exists():
-            temp_file.unlink()
+        temp_file.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        if temp_file.exists():
-            temp_file.unlink()
+        temp_file.unlink(missing_ok=True)
         raise HTTPException(status_code=422, detail=f"Backend processing failure: Unable to parse ICSR dataset. {str(e)}")
 
 
@@ -336,6 +350,7 @@ def reset_dataset():
     """Resets the active dataset back to the default bundled Bisoprolol reference dataset."""
     global ACTIVE_DATASET_PATH
     ACTIVE_DATASET_PATH = None
+    app.state.active_dataset_name = None
     return {"status": "success", "active_dataset": Path(get_active_dataset_path()).name}
 
 
@@ -347,6 +362,10 @@ def reset_dataset():
 def generate_report(req: GenerateRequest):
     """Executes the complete PADER regulatory generation pipeline on the active or provided dataset."""
     file_path = get_active_dataset_path(req.file_path)
+    # Never permit a client-supplied arbitrary server path to be processed.
+    # Explicit paths are supported only for files created by the upload route.
+    if req.file_path and Path(file_path).resolve().parent != OUTPUTS_DIR.resolve():
+        raise HTTPException(status_code=400, detail="Specified dataset must be uploaded through /api/upload.")
 
     # Configure LLM Client
     if req.llm_provider.lower() == "mock" or not req.api_key:
@@ -382,6 +401,8 @@ def generate_report(req: GenerateRequest):
 
     # Cache report
     report_id = f"PADER-{report.metadata.product_name}-{report.metadata.reporting_period_end}"
+    if report_id in REPORTS_DB:
+        report_id = f"{report_id}-{secrets.token_hex(4).upper()}"
     if report.evaluation:
         report.evaluation.report_id = report_id
     REPORTS_DB[report_id] = report
@@ -402,7 +423,7 @@ def generate_report(req: GenerateRequest):
         "human_approved": report.evaluation.is_human_approved if report.evaluation else False,
         "markdown_preview": markdown_content[:1500] + "\n\n...(full document available at /api/reports/{id}/markdown)",
         "report": report.model_dump(),
-        "dataset_analyzed": Path(file_path).name,
+        "dataset_analyzed": getattr(app.state, "active_dataset_name", None) if file_path == ACTIVE_DATASET_PATH else Path(file_path).name,
         "is_custom_dataset": is_custom
     }
 

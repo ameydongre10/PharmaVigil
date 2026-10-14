@@ -164,6 +164,14 @@ def register_user(
         # Generate default clinical registration ID if omitted by user
         medical_license = f"MED-REG-{secrets.token_hex(3).upper()}"
 
+    username = username.strip().lower()
+    full_name = full_name.strip()
+    email = (email or username).strip().lower()
+    if not username or not full_name or not password:
+        raise ValueError("Username, password, and full name are required.")
+    if len(password) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+
     p_hash, salt = hash_password(password)
     now = datetime.now(timezone.utc).isoformat()
 
@@ -174,8 +182,8 @@ def register_user(
         INSERT INTO users (username, email, password_hash, salt, role, full_name, medical_license, specialty, affiliation, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            username.strip().lower(),
-            (email or username).strip().lower(),
+            username,
+            email,
             p_hash,
             salt,
             role,
@@ -262,7 +270,14 @@ def get_user_from_token(token: str, db_path: Optional[Path] = None) -> Optional[
     if not row:
         return None
 
-    expires = datetime.fromisoformat(row["expires_at"])
+    try:
+        expires = datetime.fromisoformat(row["expires_at"])
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        # Treat malformed persisted expiry data as invalid rather than causing
+        # an authentication endpoint error.
+        return None
     if datetime.now(timezone.utc) > expires:
         # Token expired
         return None
@@ -292,7 +307,35 @@ def generate_verification_signature(
     verified_at: str
 ) -> str:
     msg = f"{report_id}|{doctor_name}|{license_no}|{decision}|{verified_at}"
-    return hashlib.sha256(msg.encode("utf-8")).hexdigest()
+    return hmac.new(_verification_secret(), msg.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def _verification_secret() -> bytes:
+    """Load a stable deployment secret; avoid exposing a plain hash as a signature."""
+    import os
+
+    configured = os.environ.get("PHARMAVIGIL_SIGNING_KEY")
+    if configured:
+        return configured.encode("utf-8")
+    # Persist a random key alongside the local database so signatures survive
+    # restarts. Deployments should set PHARMAVIGIL_SIGNING_KEY when storage is
+    # ephemeral or multiple instances are used.
+    key_path = DB_PATH.with_name(".signing_key")
+    try:
+        return key_path.read_bytes()
+    except FileNotFoundError:
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        key = secrets.token_bytes(32)
+        try:
+            with key_path.open("xb") as key_file:
+                key_file.write(key)
+        except FileExistsError:
+            return key_path.read_bytes()
+        try:
+            key_path.chmod(0o600)
+        except OSError:
+            pass
+        return key
 
 
 def record_doctor_verification(

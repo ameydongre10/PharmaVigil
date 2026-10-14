@@ -20,6 +20,26 @@ def test_health_check(client):
     assert data["service"] == "pader-regulatory-engine"
 
 
+def test_cors_rejects_untrusted_credentialed_origin(client):
+    response = client.options(
+        "/api/auth/me",
+        headers={
+            "Origin": "https://attacker.example",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization",
+        },
+    )
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_generate_rejects_arbitrary_local_file_path(client, tmp_path):
+    outside_file = tmp_path / "private.csv"
+    outside_file.write_text("safety_report_id,adverse_event\n1,Example", encoding="utf-8")
+    response = client.post("/api/generate", json={"file_path": str(outside_file), "llm_provider": "mock"})
+    assert response.status_code == 400
+    assert "uploaded through /api/upload" in response.json()["detail"]
+
+
 def test_sample_data_endpoint(client):
     response = client.get("/api/sample-data")
     assert response.status_code == 200

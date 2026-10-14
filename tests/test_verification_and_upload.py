@@ -7,6 +7,7 @@ Comprehensive End-to-End Tests for:
 """
 
 import io
+from pathlib import Path
 import pytest
 import uuid
 from fastapi.testclient import TestClient
@@ -129,6 +130,16 @@ def test_authentication_and_rbac(client):
         "password": "wrongpassword"
     })
     assert bad_login.status_code == 401
+
+
+def test_registration_rejects_short_password(client):
+    response = client.post("/api/auth/register", json={
+        "username": f"short_{uuid.uuid4().hex[:8]}",
+        "password": "123",
+        "full_name": "Example User",
+        "role": "analyst",
+    })
+    assert response.status_code == 422
 
 
 def test_doctor_verification_and_database_audit(client):
@@ -255,7 +266,29 @@ def test_excel_dataset_upload_and_analysis(client):
     assert up_data["total_cases"] == 2
     assert up_data["serious_cases"] == 1
     assert up_data["serious_percentage"] == 50.0
+    client.post("/api/dataset/reset")
 
+
+def test_upload_rejects_file_over_limit(client):
+    oversized = io.BytesIO(b"x" * (25 * 1024 * 1024 + 1))
+    response = client.post(
+        "/api/upload",
+        files={"file": ("large.csv", oversized, "text/csv")},
+    )
+    assert response.status_code == 413
+    assert "25 MiB" in response.json()["detail"]
+
+
+def test_upload_storage_name_is_not_client_controlled(client):
+    csv_content = "safety_report_id,adverse_event\nSAFE-001,Rash\n"
+    response = client.post(
+        "/api/upload",
+        files={"file": ("../../same.csv", io.BytesIO(csv_content.encode()), "text/csv")},
+    )
+    assert response.status_code == 200
+    stored_path = Path(response.json()["stored_path"]).resolve()
+    assert stored_path.parent == (Path(__file__).resolve().parents[1] / "outputs").resolve()
+    assert stored_path.name != "same.csv"
     # Reset back to benchmark dataset
     client.post("/api/dataset/reset")
 

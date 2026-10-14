@@ -88,12 +88,21 @@ def test_human_review_sign_off(client):
         "reviewer_name": "Dr. Sarah Connor, Chief Medical Officer",
         "notes": "Verified all 15-day alert tables and MedDRA counts."
     }
-    rev_res = client.post(f"/api/reports/{report_id}/review", json=rev_payload)
+    login = client.post("/api/auth/login", json={
+        "username": "doctor@pharmavigil.org",
+        "password": "doctor123",
+    })
+    assert login.status_code == 200
+    rev_res = client.post(
+        f"/api/reports/{report_id}/review",
+        json=rev_payload,
+        headers={"Authorization": f"Bearer {login.json()['token']}"},
+    )
     assert rev_res.status_code == 200
     rev_data = rev_res.json()
     assert rev_data["new_status"] == "HUMAN_APPROVED"
     assert rev_data["is_human_approved"] is True
-    assert rev_data["review_record"]["reviewer_name"] == "Dr. Sarah Connor, Chief Medical Officer"
+    assert rev_data["review_record"]["reviewer_name"] == login.json()["user"]["full_name"]
 
 
 def test_root_backend_status(client):

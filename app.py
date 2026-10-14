@@ -515,42 +515,13 @@ def review_report(report_id: str, req: ReviewRequest, authorization: Optional[st
                 detail=f"Access denied: User '{user.get('username')}' has role '{user.get('role')}'. Only authenticated medical professionals with the Doctor/Verifier role may sign off."
             )
         doctor_user = user
-    else:
-        # Check if caller matches a known doctor user in DB or test fixture
-        from src.auth import get_db_connection
-        conn = get_db_connection()
-        cur = conn.cursor()
-        reviewer_name_query = (req.reviewer_name or "").strip()
-        cur.execute(
-            "SELECT id, username, email, role, full_name, medical_license, specialty, affiliation FROM users WHERE role IN ('doctor', 'verifier') AND (full_name = ? OR username = ?)",
-            (reviewer_name_query, reviewer_name_query)
+    elif decision_enum != ReviewDecision.SIMULATED_APPROVED:
+        # A claimed reviewer name or license is not proof of identity. Only an
+        # authenticated doctor/verifier session may create a real sign-off.
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required: Only authenticated medical professionals with the Doctor/Verifier role may sign off on regulatory reports."
         )
-        row = cur.fetchone()
-        conn.close()
-
-        if row:
-            doctor_user = dict(row)
-        elif "dr." in reviewer_name_query.lower() or "md" in reviewer_name_query.lower() or decision_enum == ReviewDecision.SIMULATED_APPROVED:
-            # Auto-register test fixture doctor in database
-            try:
-                reg_doc = register_user(
-                    username=f"dr_{int(datetime.now().timestamp())}_{abs(hash(reviewer_name_query)) % 10000}",
-                    password=secrets.token_hex(8),
-                    full_name=reviewer_name_query or "Dr. Safety Reviewer, MD",
-                    role="doctor",
-                    medical_license=req.doctor_license or f"MED-LIC-{secrets.token_hex(3).upper()}",
-                    specialty=req.specialty or "Clinical Safety",
-                    affiliation=req.affiliation or "Safety Board"
-                )
-                doctor_user = reg_doc
-            except Exception:
-                pass
-
-        if not doctor_user and decision_enum != ReviewDecision.SIMULATED_APPROVED:
-            raise HTTPException(
-                status_code=401,
-                detail="Authentication required: Only authenticated medical professionals with the Doctor/Verifier role may sign off on regulatory reports."
-            )
 
     # Fallback fixture if simulated
     if not doctor_user:

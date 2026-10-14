@@ -209,6 +209,15 @@ def test_verification_validation_blocks_unauthorized_access(client):
     })
     assert spoof_res.status_code == 401
 
+    # A known doctor's display name is not authentication and cannot be used
+    # to impersonate the seeded doctor account.
+    known_doctor_spoof = client.post(f"/api/reports/{report_id}/review", json={
+        "decision": "APPROVED",
+        "reviewer_name": "Dr. Eleanor Vance, MD",
+        "notes": "Impersonation attempt",
+    })
+    assert known_doctor_spoof.status_code == 401
+
     # 2. Authenticated Analyst (non-doctor) attempt -> 403 Forbidden
     ana_login = client.post("/api/auth/login", json={
         "username": "analyst@pharmavigil.org",

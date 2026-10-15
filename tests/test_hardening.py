@@ -120,6 +120,21 @@ def sample_excel_file(tmp_path):
 
 class TestDataQualityEdgeCases:
 
+    def test_missing_case_ids_are_counted_without_dropping_rows(self):
+        df = _make_df([
+            {"safetyreportid": None, "receivedate": "20250101", "serious": "1",
+             "patient_reaction_reactionmeddrapt": "Rash"},
+            {"safetyreportid": None, "receivedate": "20250102", "serious": "0",
+             "patient_reaction_reactionmeddrapt": "Headache"},
+        ])
+        assert AnalysisEngine(df).get_case_volume().value["total_cases"] == 1
+
+    def test_reaction_analysis_handles_missing_case_id_column(self):
+        df = pd.DataFrame({"patient_reaction_reactionmeddrapt": ["Rash"]})
+        engine = AnalysisEngine(df)
+        assert engine.get_reactions() is None
+        assert engine.get_serious_reactions() is None
+
     def test_A_empty_dataset_does_not_crash(self):
         """A: Empty dataset should not crash — returns zero counts."""
         # Build a proper empty normalised DataFrame with all required columns

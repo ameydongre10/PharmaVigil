@@ -66,12 +66,15 @@ def test_generate_report_pipeline(client):
     assert data["evaluation"]["required_sections_present"] == 8
     assert data["evaluation"]["automated_evaluation_status"] == "PASS"
 
+    login = client.post("/api/auth/login", json={"username": "doctor@pharmavigil.org", "password": "doctor123"})
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+
     # Test report retrieval
-    get_res = client.get(f"/api/reports/{report_id}")
+    get_res = client.get(f"/api/reports/{report_id}", headers=headers)
     assert get_res.status_code == 200
 
     # Test markdown retrieval
-    md_res = client.get(f"/api/reports/{report_id}/markdown")
+    md_res = client.get(f"/api/reports/{report_id}/markdown", headers=headers)
     assert md_res.status_code == 200
     assert "# Periodic Adverse Drug Experience Report" in md_res.text
 

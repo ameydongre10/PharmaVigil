@@ -76,24 +76,22 @@ AMOX-004,2024-02-18,0,0,DEU,27,Male,Nausea,Amoxicillin
 
 def test_authentication_and_rbac(client):
     """Requirement 3: Secure login/register authentication with role-based access."""
-    # Register Doctor with license
+    # Public registration defaults to an analyst; reviewer roles are provisioned separately.
     doc_reg = client.post("/api/auth/register", json={
         f"username": f"dr_watson_{uuid.uuid4().hex[:6]}",
         "password": "securepassword123",
         "full_name": "Dr. John Watson, MD",
-        "role": "doctor",
-        "medical_license": "GMC-994821",
+        "role": "analyst",
         "specialty": "Clinical Safety",
         "affiliation": "St. Marys Hospital"
     })
     assert doc_reg.status_code == 200
     doc_data = doc_reg.json()
     assert doc_data["status"] == "success"
-    assert doc_data["user"]["role"] == "doctor"
-    assert doc_data["user"]["medical_license"] == "GMC-994821"
+    assert doc_data["user"]["role"] == "analyst"
     doc_token = doc_data["token"]
 
-    # Register Analyst (non-doctor)
+    # A separate public analyst registration is also allowed.
     ana_reg = client.post("/api/auth/register", json={
         f"username": f"analyst_bob_{uuid.uuid4().hex[:6]}",
         "password": "securepassword123",
@@ -108,7 +106,16 @@ def test_authentication_and_rbac(client):
     assert me_res.status_code == 200
     assert me_res.json()["user"]["username"].startswith("dr_watson_")
 
-    # Test Pre-seeded Demo Accounts
+    # Enable demo seeding explicitly for this test only.
+    import os
+    from src.auth import init_auth_db
+    from pathlib import Path
+    test_db = Path(__file__).resolve().parents[1] / "outputs" / "pharmavigil.db"
+    # The test process may have imported the app before setting this fixture
+    # switch, so create the known demo accounts here using the test DB.
+    init_auth_db(test_db)
+
+    # Test seeded demo accounts when the test fixture has initialized them.
     doc_login = client.post("/api/auth/login", json={
         "username": "doctor@pharmavigil.org",
         "password": "doctor123"
@@ -140,6 +147,53 @@ def test_registration_rejects_short_password(client):
         "role": "analyst",
     })
     assert response.status_code == 422
+
+
+def test_public_registration_cannot_create_reviewer(client):
+    response = client.post("/api/auth/register", json={
+        "username": f"self_doctor_{uuid.uuid4().hex[:8]}",
+        "password": "a-long-password-123",
+        "full_name": "Self Registered Doctor",
+        "role": "doctor",
+        "medical_license": "UNVERIFIED-123",
+    })
+    assert response.status_code == 403
+
+
+def test_auth_endpoints_require_bearer_scheme(client):
+    login = client.post("/api/auth/login", json={
+        "username": "doctor@pharmavigil.org", "password": "doctor123"
+    })
+    token = login.json()["token"]
+    assert client.get("/api/auth/me", headers={"Authorization": token}).status_code == 401
+    assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"}).status_code == 200
+
+
+def test_request_body_limit_rejects_known_oversize(client):
+    response = client.post("/api/auth/login", content=b"{}", headers={"Content-Length": str(27 * 1024 * 1024)})
+    assert response.status_code == 413
+
+
+def test_report_crud_requires_auth_and_preserves_reviewed_reports(client):
+    generated = client.post("/api/generate", json={"llm_provider": "mock"}).json()
+    report_id = generated["report_id"]
+    assert client.get("/api/reports").status_code == 401
+
+    # Register a normal analyst, who may list, edit and delete only drafts.
+    reg = client.post("/api/auth/register", json={
+        "username": f"crud_{uuid.uuid4().hex[:8]}",
+        "password": "correct-horse-battery-staple",
+        "full_name": "CRUD Test Analyst",
+    })
+    token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    assert client.get("/api/reports", headers=headers).status_code == 200
+    updated = client.put(f"/api/reports/{report_id}", headers=headers, json={"sponsor_name": "Interview Test"})
+    assert updated.status_code == 200
+    assert updated.json()["metadata"]["sponsor_name"] == "Interview Test"
+    deleted = client.delete(f"/api/reports/{report_id}", headers=headers)
+    assert deleted.status_code == 204
+    assert client.get(f"/api/reports/{report_id}", headers=headers).status_code == 404
 
 
 def test_doctor_verification_and_database_audit(client):
@@ -187,7 +241,7 @@ def test_doctor_verification_and_database_audit(client):
     assert v_info["verification"]["signature_hash"] == rec["signature_hash"]
 
     # Verify Markdown export contains official doctor sign-off section
-    md_res = client.get(f"/api/reports/{report_id}/markdown")
+    md_res = client.get(f"/api/reports/{report_id}/markdown", headers={"Authorization": f"Bearer {token}"})
     assert md_res.status_code == 200
     assert "## Human Review & Medical Verification Sign-Off" in md_res.text
     assert "MED-PV-849201" in md_res.text

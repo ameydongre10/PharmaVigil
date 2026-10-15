@@ -76,10 +76,25 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# In-memory storage for generated reports and active dataset
-REPORTS_DB: Dict[str, PADERReport] = {}
+
+@app.middleware("http")
+async def limit_request_body(request, call_next):
+    """Reject oversized request bodies before route handling when length is known."""
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > 26 * 1024 * 1024:
+                return JSONResponse(status_code=413, content={"detail": "Request body exceeds the 26 MiB limit."})
+        except ValueError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
+    return await call_next(request)
+
+# In-memory report and active-dataset state is suitable for this single-process
+# demo deployment only; use shared persistent storage before scaling workers.
 OUTPUTS_DIR = BASE_DIR / "outputs"
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DB: Dict[str, PADERReport] = {}
+REPORTS_PATH = OUTPUTS_DIR / "reports.json"
 SAMPLE_DATA_DIR = BASE_DIR / "sample_data"
 SAMPLE_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -89,11 +104,45 @@ FALLBACK_SAMPLE_PATH = SAMPLE_DATA_DIR / "sample_icsr_dataset.xlsx"
 ACTIVE_DATASET_PATH: Optional[str] = None
 
 
+def persist_reports() -> None:
+    """Atomically persist report state for restarts on a persistent disk."""
+    temp_path = REPORTS_PATH.with_suffix(".json.tmp")
+    payload = {report_id: report.model_dump(mode="json") for report_id, report in REPORTS_DB.items()}
+    temp_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    temp_path.replace(REPORTS_PATH)
+
+
+def load_reports() -> None:
+    """Load persisted reports; ignore no corruption silently."""
+    if not REPORTS_PATH.exists():
+        return
+    try:
+        content = json.loads(REPORTS_PATH.read_text(encoding="utf-8"))
+        if not isinstance(content, dict):
+            raise ValueError("Report store must contain a JSON object")
+        REPORTS_DB.update({key: PADERReport.model_validate(value) for key, value in content.items()})
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise RuntimeError(f"Unable to load persisted reports from {REPORTS_PATH.name}") from exc
+
+
+load_reports()
+
+
+def require_user(authorization: Optional[str]) -> Dict[str, Any]:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    user = get_user_from_token(authorization[7:].strip())
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired or invalid token.")
+    return user
+
+
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=1, description="Unique username or email")
-    password: str = Field(..., min_length=6, description="Password (min 6 characters)")
+    password: str = Field(..., min_length=12, max_length=256, description="Password (12-256 characters)")
     full_name: str = Field(..., min_length=1, description="Full Name and medical title")
-    role: str = Field("doctor", description="Role: doctor, verifier, or analyst")
+    # Public self-registration does not grant medical reviewer privileges.
+    role: str = Field("analyst", description="Self-registration role: analyst or user")
     email: Optional[str] = None
     medical_license: Optional[str] = Field(None, description="Medical registration/license number (required for doctors)")
     specialty: Optional[str] = Field(None, description="Clinical specialty, e.g. Pharmacovigilance")
@@ -124,6 +173,12 @@ class ReviewRequest(BaseModel):
     specialty: Optional[str] = Field(None, description="Specialty / Department")
     affiliation: Optional[str] = Field(None, description="Hospital or institutional affiliation")
     token: Optional[str] = Field(None, description="Session token if Authorization header not provided")
+
+
+class ReportMetadataUpdate(BaseModel):
+    product_name: Optional[str] = Field(None, min_length=1, max_length=200)
+    sponsor_name: Optional[str] = Field(None, min_length=1, max_length=200)
+    application_number: Optional[str] = Field(None, min_length=1, max_length=100)
 
 
 class RegenerateSectionRequest(BaseModel):
@@ -173,6 +228,8 @@ def health_check():
 @app.post("/api/auth/register", tags=["Authentication"])
 def register(req: RegisterRequest):
     """Registers a new user (Doctor/Verifier or Safety Analyst) with credentials and role."""
+    if req.role.strip().lower() not in ("analyst", "user"):
+        raise HTTPException(status_code=403, detail="Self-registration is limited to analyst or user accounts.")
     try:
         user = register_user(
             username=req.username,
@@ -213,7 +270,8 @@ def get_current_user(authorization: Optional[str] = Header(None)):
     """Returns currently authenticated user profile based on Bearer token."""
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing.")
-    user = get_user_from_token(authorization)
+    token = authorization[7:].strip() if authorization.lower().startswith("bearer ") else ""
+    user = get_user_from_token(token) if token else None
     if not user:
         raise HTTPException(status_code=401, detail="Session expired or invalid token.")
     return {"status": "success", "user": user}
@@ -223,7 +281,9 @@ def get_current_user(authorization: Optional[str] = Header(None)):
 def logout(authorization: Optional[str] = Header(None)):
     """Logs out and invalidates the session token."""
     if authorization:
-        delete_session(authorization)
+        token = authorization[7:].strip() if authorization.lower().startswith("bearer ") else ""
+        if token:
+            delete_session(token)
     return {"status": "success", "message": "Logged out successfully."}
 
 
@@ -406,6 +466,7 @@ def generate_report(req: GenerateRequest):
     if report.evaluation:
         report.evaluation.report_id = report_id
     REPORTS_DB[report_id] = report
+    persist_reports()
 
     # Render markdown
     assembler = ReportAssembler()
@@ -429,8 +490,9 @@ def generate_report(req: GenerateRequest):
 
 
 @app.get("/api/reports", tags=["PADER Pipeline"])
-def list_reports():
-    """Lists all generated reports in memory."""
+def list_reports(authorization: Optional[str] = Header(None)):
+    """Lists persisted reports. Requires an authenticated application user."""
+    require_user(authorization)
     items = []
     for rid, rep in REPORTS_DB.items():
         items.append({
@@ -447,16 +509,57 @@ def list_reports():
 
 
 @app.get("/api/reports/{report_id}", tags=["PADER Pipeline"])
-def get_report(report_id: str):
+def get_report(report_id: str, authorization: Optional[str] = Header(None)):
     """Retrieves full structured details for a specific report."""
+    require_user(authorization)
+    if not REPORTS_DB:
+        load_reports()
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
     return REPORTS_DB[report_id].model_dump()
 
 
+@app.put("/api/reports/{report_id}", tags=["PADER Pipeline"])
+def update_report_metadata(report_id: str, req: ReportMetadataUpdate, authorization: Optional[str] = Header(None)):
+    """Update editable report metadata; only an authenticated analyst may edit drafts."""
+    user = require_user(authorization)
+    if user.get("role") not in ("analyst", "user"):
+        raise HTTPException(status_code=403, detail="Only analysts may edit report metadata.")
+    report = REPORTS_DB.get(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
+    if report.status != ReportStatus.DRAFT_PENDING_REVIEW:
+        raise HTTPException(status_code=409, detail="Only draft reports can be edited.")
+    updates = req.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(report.metadata, field, value)
+    REPORTS_DB[report_id] = report
+    persist_reports()
+    return report.model_dump()
+
+
+@app.delete("/api/reports/{report_id}", status_code=204, tags=["PADER Pipeline"])
+def delete_report(report_id: str, authorization: Optional[str] = Header(None)):
+    """Delete an unreviewed draft. Reviewed reports are retained as audit records."""
+    user = require_user(authorization)
+    if user.get("role") not in ("analyst", "user"):
+        raise HTTPException(status_code=403, detail="Only analysts may delete draft reports.")
+    report = REPORTS_DB.get(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
+    if report.review_record or report.status != ReportStatus.DRAFT_PENDING_REVIEW:
+        raise HTTPException(status_code=409, detail="Reviewed reports cannot be deleted.")
+    del REPORTS_DB[report_id]
+    persist_reports()
+    return Response(status_code=204)
+
+
 @app.get("/api/reports/{report_id}/markdown", tags=["PADER Pipeline"])
-def get_report_markdown(report_id: str):
+def get_report_markdown(report_id: str, authorization: Optional[str] = Header(None)):
     """Returns the regulatory Markdown document representation of the report."""
+    require_user(authorization)
+    if not REPORTS_DB:
+        load_reports()
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
     assembler = ReportAssembler()
@@ -465,8 +568,11 @@ def get_report_markdown(report_id: str):
 
 
 @app.get("/api/reports/{report_id}/download", tags=["PADER Pipeline"])
-def download_report(report_id: str):
+def download_report(report_id: str, authorization: Optional[str] = Header(None)):
     """Downloads the report as a Markdown file."""
+    require_user(authorization)
+    if not REPORTS_DB:
+        load_reports()
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
     assembler = ReportAssembler()
@@ -557,6 +663,7 @@ def review_report(report_id: str, req: ReviewRequest, authorization: Optional[st
     )
 
     REPORTS_DB[report_id] = updated_report
+    persist_reports()
 
     # Save to disk as well
     review_path = OUTPUTS_DIR / "review.json"

@@ -99,10 +99,12 @@ def init_auth_db(db_path: Optional[Path] = None) -> None:
     """)
     conn.commit()
 
-    # Seed demo users if empty
+    # Seed demo accounts only when explicitly enabled. Never create known
+    # credentials on a deployed service by default.
     cur.execute("SELECT COUNT(*) FROM users")
     count = cur.fetchone()[0]
-    if count == 0:
+    import os
+    if count == 0 and os.environ.get("PHARMAVIGIL_SEED_DEMO_USERS", "").lower() in {"1", "true", "yes"}:
         now = datetime.now(timezone.utc).isoformat()
 
         # 1. Verified Doctor
@@ -149,7 +151,7 @@ def register_user(
     username: str,
     password: str,
     full_name: str,
-    role: str = "doctor",
+    role: str = "analyst",
     email: Optional[str] = None,
     medical_license: Optional[str] = None,
     specialty: Optional[str] = None,
@@ -171,6 +173,8 @@ def register_user(
         raise ValueError("Username, password, and full name are required.")
     if len(password) < 6:
         raise ValueError("Password must be at least 6 characters long.")
+    if len(password) > 256:
+        raise ValueError("Password must be no more than 256 characters long.")
 
     p_hash, salt = hash_password(password)
     now = datetime.now(timezone.utc).isoformat()

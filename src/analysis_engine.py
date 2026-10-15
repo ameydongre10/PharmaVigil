@@ -19,7 +19,7 @@ class AnalysisEngine:
             }
             # Only aggregate columns present in df
             agg_dict = {k: v for k, v in agg_dict.items() if k in df.columns}
-            self.cases_df = df.groupby('safetyreportid').agg(agg_dict).reset_index()
+            self.cases_df = df.groupby('safetyreportid', dropna=False).agg(agg_dict).reset_index()
         else:
             self.cases_df = pd.DataFrame()
 
@@ -184,7 +184,7 @@ class AnalysisEngine:
         )
         
     def get_reactions(self, top_n: int = 20) -> Optional[AnalysisResult]:
-        if 'patient_reaction_reactionmeddrapt' not in self.df.columns:
+        if 'patient_reaction_reactionmeddrapt' not in self.df.columns or 'safetyreportid' not in self.df.columns:
             return None
         rx_df = self.df[['safetyreportid', 'patient_reaction_reactionmeddrapt']].drop_duplicates()
         counts = rx_df['patient_reaction_reactionmeddrapt'].value_counts().head(top_n).to_dict()
@@ -200,7 +200,7 @@ class AnalysisEngine:
         )
 
     def get_serious_reactions(self, top_n: int = 20) -> Optional[AnalysisResult]:
-        if 'patient_reaction_reactionmeddrapt' not in self.df.columns:
+        if 'patient_reaction_reactionmeddrapt' not in self.df.columns or 'safetyreportid' not in self.df.columns or 'serious_bool' not in self.cases_df.columns:
             return None
             
         serious_case_ids = self.cases_df[self.cases_df['serious_bool'] == True]['safetyreportid']

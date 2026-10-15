@@ -9,9 +9,9 @@
 [![Regulatory Standard](https://img.shields.io/badge/FDA-21%20CFR%20314.80-red.svg)](https://www.accessdata.fda.gov/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**PharmaVigil** is an enterprise-grade, deterministic, and hallucination-free regulatory report generation system for **Periodic Adverse Drug Experience Reports (PADER)** in compliance with **FDA 21 CFR § 314.80**.
+**PharmaVigil** is an interview/portfolio prototype exploring deterministic analysis and evidence-grounded draft generation for **Periodic Adverse Drug Experience Reports (PADER)**. It is not validated for regulatory submissions or clinical use. Its number and phrase checks are safeguards, not a guarantee that generated content is hallucination-free.
 
-It bridges raw pharmacovigilance line-listings (ICSRs) with audit-ready regulatory submissions by combining mathematical aggregation, strict context boundary isolation, grounded LLM narrative generation, automated number-level verification, and an auditable human medical reviewer sign-off workflow.
+It processes pharmacovigilance line-listings (ICSRs) using mathematical aggregation, evidence packets, optional LLM narrative generation, automated checks, and a human-review workflow. Reports remain drafts pending qualified review.
 
 ---
 
@@ -188,6 +188,8 @@ PharmaVigil/
 
 ## ⚡ Quick Start & Local Execution
 
+> **Prototype boundary:** this repository is an interview/portfolio demonstration, not validated software for clinical decisions or regulatory submissions. The default deployment does not seed demo credentials. Set `PHARMAVIGIL_SEED_DEMO_USERS=true` only in an isolated local demo/test environment to enable the sample doctor and analyst accounts; never enable this on a public service.
+
 ### 1. Clone & Set Up Environment
 
 ```bash
@@ -203,11 +205,19 @@ pip install -r requirements.txt
 ### 2. Run CLI Report Generation
 
 ```bash
-# Generate a draft report with offline Mock LLM (100% grounded)
+# Generate a draft report offline with the mock LLM; checks are not a guarantee of zero hallucinations
 python run_pader.py --mock --output-dir outputs
 
 # Perform explicit medical reviewer sign-off
 python run_pader.py --sign-off APPROVED --reviewer "Dr. J. Doe, MD" --notes "Verified all MedDRA tables."
+```
+
+When running tests that require the seeded demo accounts on PowerShell:
+
+```powershell
+$env:PHARMAVIGIL_SEED_DEMO_USERS = "true"
+python -m pytest -q
+Remove-Item Env:PHARMAVIGIL_SEED_DEMO_USERS
 ```
 
 ### 3. Launch Web Dashboard & REST API Locally
@@ -232,6 +242,7 @@ The application serves an intuitive, single-page regulatory dashboard:
 - **Multi-Provider LLM Switcher:** Toggle between offline deterministic mock and live API keys (OpenAI, Gemini, Anthropic).
 - **Compliance & Grounding Metrics:** Real-time factual consistency %, grounding score %, and unsupported claim counts.
 - **Medical Reviewer Station:** Authorized safety officers can review and sign off (`APPROVED`, `NEEDS_REVISION`, `REJECTED`) with timestamped audit records.
+- **Report CRUD:** Authenticated users can list and retrieve saved reports; analysts can edit draft metadata and delete unreviewed drafts. Reviewed reports are retained.
 - **Export Formats:** One-click download of the complete Markdown document (`.md`) or structured JSON audit payload.
 
 ### Core API Endpoints
@@ -242,8 +253,10 @@ The application serves an intuitive, single-page regulatory dashboard:
 | `GET` | `/api/sample-data` | Pre-computed summary of bundled ICSR dataset |
 | `POST` | `/api/upload` | Upload and validate a new ICSR dataset (.xlsx / .csv) |
 | `POST` | `/api/generate` | Run full end-to-end report generation pipeline |
-| `GET` | `/api/reports` | List generated reports in session |
+| `GET` | `/api/reports` | Authenticated list of persisted reports |
 | `GET` | `/api/reports/{id}` | Retrieve complete structured JSON report |
+| `PUT` | `/api/reports/{id}` | Authenticated analyst updates draft metadata |
+| `DELETE` | `/api/reports/{id}` | Authenticated analyst deletes an unreviewed draft |
 | `GET` | `/api/reports/{id}/markdown` | Get raw regulatory Markdown text |
 | `GET` | `/api/reports/{id}/download` | Download `.md` report attachment |
 | `POST` | `/api/reports/{id}/review` | Submit human reviewer sign-off decision |

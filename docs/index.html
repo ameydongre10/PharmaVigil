@@ -291,6 +291,9 @@
               <button onclick="window.print()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 text-xs font-medium transition">
                 <i class="fa-solid fa-print mr-1"></i> Print
               </button>
+              <button onclick="loadSavedReports()" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded border border-teal-200 text-xs font-medium">Saved Reports</button>
+              <button onclick="editCurrentReport()" id="btnEditReport" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded border border-amber-200 text-xs font-medium disabled:opacity-50" disabled>Edit</button>
+              <button onclick="deleteCurrentReport()" id="btnDeleteReport" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded border border-rose-200 text-xs font-medium disabled:opacity-50" disabled>Delete Draft</button>
             </div>
           </div>
 
@@ -578,6 +581,52 @@
     let currentMarkdown = "";
     let uploadedFilePath = localStorage.getItem("PV_ACTIVE_DATASET_PATH") || null;
 
+    async function loadSavedReports() {
+      if (!authToken) { alert("Sign in to load saved reports."); return; }
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/reports`, { headers: { "Authorization": `Bearer ${authToken}` } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Unable to load reports.");
+        if (!data.reports.length) { alert("No saved reports yet."); return; }
+        const options = data.reports.map(r => `${r.report_id} — ${r.product_name} (${r.status})`).join("\n");
+        const selected = prompt(`Saved reports:\n${options}\n\nPaste a report ID to open:`);
+        if (!selected || !data.reports.some(r => r.report_id === selected.trim())) return;
+        const id = selected.trim();
+        const response = await fetch(`${BACKEND_URL}/api/reports/${encodeURIComponent(id)}`, { headers: { "Authorization": `Bearer ${authToken}` } });
+        const report = await response.json();
+        if (!response.ok) throw new Error(report.detail || "Unable to open report.");
+        currentReportId = id; currentReportData = report;
+        const md = await fetch(`${BACKEND_URL}/api/reports/${encodeURIComponent(id)}/markdown`, { headers: { "Authorization": `Bearer ${authToken}` } });
+        currentMarkdown = await md.text();
+        updateReportUI({ report_id: id, report, evaluation: report.evaluation, product_name: report.metadata.product_name, report_status: report.status });
+      } catch (error) { alert(`Saved reports error: ${error.message}`); }
+    }
+
+    async function editCurrentReport() {
+      if (!currentReportId || !authToken) return;
+      const product = prompt("Product name:", currentReportData?.metadata?.product_name || "");
+      if (product === null) return;
+      const sponsor = prompt("Sponsor name:", currentReportData?.metadata?.sponsor_name || "");
+      if (sponsor === null) return;
+      const res = await fetch(`${BACKEND_URL}/api/reports/${encodeURIComponent(currentReportId)}`, {
+        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
+        body: JSON.stringify({ product_name: product, sponsor_name: sponsor })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || "Report update failed."); return; }
+      currentReportData = data; alert("Draft metadata updated.");
+    }
+
+    async function deleteCurrentReport() {
+      if (!currentReportId || !authToken || !confirm("Permanently delete this unreviewed draft?")) return;
+      const res = await fetch(`${BACKEND_URL}/api/reports/${encodeURIComponent(currentReportId)}`, { method: "DELETE", headers: { "Authorization": `Bearer ${authToken}` } });
+      if (!res.ok) { const data = await res.json(); alert(data.detail || "Report deletion failed."); return; }
+      currentReportId = null; currentReportData = null; currentMarkdown = "";
+      document.getElementById("btnDeleteReport").disabled = true;
+      document.getElementById("btnEditReport").disabled = true;
+      alert("Draft deleted.");
+    }
+
     document.getElementById("backendUrlInput").value = BACKEND_URL;
     document.getElementById("btnApiDocs").href = `${BACKEND_URL}/docs`;
 
@@ -586,6 +635,7 @@
       setupDropzone();
       checkBackendHealth(true);
       await initAuth();
+      if (authToken) loadSavedReports();
 
       // Restore active uploaded dataset if stored in session
       const savedStatsStr = localStorage.getItem("PV_ACTIVE_DATASET_STATS");
@@ -1196,7 +1246,7 @@
         currentReportData = data.report;
 
         // Fetch full markdown
-        const mdRes = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/markdown`);
+        const mdRes = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/markdown`, { headers: authToken ? { "Authorization": `Bearer ${authToken}` } : {} });
         currentMarkdown = await mdRes.text();
 
         updateReportUI(data);
@@ -1210,7 +1260,8 @@
     }
 
     function updateReportUI(data) {
-      const ev = data.evaluation;
+      const ev = data.evaluation || currentReportData?.evaluation;
+      if (!ev) { alert("This report has no evaluation data to display."); return; }
       const isCustom = data.is_custom_dataset;
       const dsName = data.dataset_analyzed || (isCustom ? "User-Uploaded Dataset" : "Reference Benchmark");
 
@@ -1259,6 +1310,8 @@
       // Enable export buttons & review button if doctor
       document.getElementById("btnDownload").disabled = false;
       document.getElementById("btnAuditJson").disabled = false;
+      document.getElementById("btnEditReport").disabled = !authToken || data.report_status !== "DRAFT_PENDING_REVIEW";
+      document.getElementById("btnDeleteReport").disabled = !authToken || data.report_status !== "DRAFT_PENDING_REVIEW";
 
       if (currentUser && (currentUser.role === "doctor" || currentUser.role === "verifier")) {
         document.getElementById("btnSubmitReview").disabled = false;
@@ -1342,7 +1395,7 @@
         const data = await res.json();
 
         // Refresh markdown
-        const mdRes = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/markdown`);
+        const mdRes = await fetch(`${BACKEND_URL}/api/reports/${currentReportId}/markdown`, { headers: { "Authorization": `Bearer ${authToken}` } });
         currentMarkdown = await mdRes.text();
         document.getElementById("reportRenderedContent").innerHTML = marked.parse(currentMarkdown);
         document.getElementById("rawMarkdownContent").innerText = currentMarkdown;
@@ -1396,7 +1449,10 @@
 
     function downloadMarkdown() {
       if (!currentReportId) return;
-      window.location.href = `${BACKEND_URL}/api/reports/${currentReportId}/download`;
+      fetch(`${BACKEND_URL}/api/reports/${currentReportId}/download`, { headers: { "Authorization": `Bearer ${authToken}` } })
+        .then(res => res.ok ? res.blob() : res.json().then(e => { throw new Error(e.detail || "Download failed"); }))
+        .then(blob => { const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${currentReportId}.md`; link.click(); URL.revokeObjectURL(link.href); })
+        .catch(error => alert(error.message));
     }
 
     function downloadJsonAudit() {

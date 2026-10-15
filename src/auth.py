@@ -97,6 +97,14 @@ def init_auth_db(db_path: Optional[Path] = None) -> None:
         FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS reports (
+        report_id TEXT PRIMARY KEY,
+        report_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """)
     conn.commit()
 
     # Seed demo accounts only when explicitly enabled. Never create known

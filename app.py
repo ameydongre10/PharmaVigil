@@ -14,6 +14,7 @@ import json
 import shutil
 import tempfile
 import secrets
+import sqlite3
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
@@ -94,7 +95,6 @@ async def limit_request_body(request, call_next):
 OUTPUTS_DIR = BASE_DIR / "outputs"
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DB: Dict[str, PADERReport] = {}
-REPORTS_PATH = OUTPUTS_DIR / "reports.json"
 SAMPLE_DATA_DIR = BASE_DIR / "sample_data"
 SAMPLE_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -105,24 +105,34 @@ ACTIVE_DATASET_PATH: Optional[str] = None
 
 
 def persist_reports() -> None:
-    """Atomically persist report state for restarts on a persistent disk."""
-    temp_path = REPORTS_PATH.with_suffix(".json.tmp")
-    payload = {report_id: report.model_dump(mode="json") for report_id, report in REPORTS_DB.items()}
-    temp_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    temp_path.replace(REPORTS_PATH)
+    """Persist cached reports to the application's SQLite database."""
+    from src.auth import get_db_connection
+    conn = get_db_connection()
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        conn.executemany(
+            "INSERT INTO reports (report_id, report_json, created_at, updated_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(report_id) DO UPDATE SET report_json=excluded.report_json, updated_at=excluded.updated_at",
+            [(rid, report.model_dump_json(), now, now) for rid, report in REPORTS_DB.items()],
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def load_reports() -> None:
-    """Load persisted reports; ignore no corruption silently."""
-    if not REPORTS_PATH.exists():
-        return
+    """Load persisted reports from SQLite; malformed records fail visibly."""
+    from src.auth import get_db_connection
+    conn = get_db_connection()
     try:
-        content = json.loads(REPORTS_PATH.read_text(encoding="utf-8"))
-        if not isinstance(content, dict):
-            raise ValueError("Report store must contain a JSON object")
-        REPORTS_DB.update({key: PADERReport.model_validate(value) for key, value in content.items()})
-    except (json.JSONDecodeError, ValueError) as exc:
-        raise RuntimeError(f"Unable to load persisted reports from {REPORTS_PATH.name}") from exc
+        for row in conn.execute("SELECT report_id, report_json FROM reports"):
+            REPORTS_DB[row["report_id"]] = PADERReport.model_validate_json(row["report_json"])
+    finally:
+        conn.close()
 
 
 load_reports()
@@ -551,6 +561,13 @@ def delete_report(report_id: str, authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=409, detail="Reviewed reports cannot be deleted.")
     del REPORTS_DB[report_id]
     persist_reports()
+    from src.auth import get_db_connection
+    conn = get_db_connection()
+    try:
+        conn.execute("DELETE FROM reports WHERE report_id = ?", (report_id,))
+        conn.commit()
+    finally:
+        conn.close()
     return Response(status_code=204)
 
 

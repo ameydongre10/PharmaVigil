@@ -243,6 +243,7 @@ The application serves an intuitive, single-page regulatory dashboard:
 - **Compliance & Grounding Metrics:** Real-time factual consistency %, grounding score %, and unsupported claim counts.
 - **Medical Reviewer Station:** Authorized safety officers can review and sign off (`APPROVED`, `NEEDS_REVISION`, `REJECTED`) with timestamped audit records.
 - **Report CRUD:** Authenticated users can list and retrieve saved reports; analysts can edit draft metadata and delete unreviewed drafts. Reviewed reports are retained.
+- **Persistence note:** Reports use SQLite in `outputs/pharmavigil.db`. Render must mount durable storage for that directory (or use an external managed database) if data must survive instance replacement; the included free-tier service configuration does not specify a persistent disk.
 - **Export Formats:** One-click download of the complete Markdown document (`.md`) or structured JSON audit payload.
 
 ### Core API Endpoints

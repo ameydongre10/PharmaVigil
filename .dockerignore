@@ -1,3 +1,4 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
@@ -6,9 +7,48 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
-.git/
-.gitignore
-.env
-outputs/
+*.egg-info/
+dist/
+build/
+
+# IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Outputs and temporary files
+outputs/
+*.db
+*.db-journal
+.signing_key
+
+# Tests
+tests/
+pytest.ini
+
+# Documentation and demos
+docs/
+demo_phase3.py
+demo_phase4.py
+run_pader.py
+evaluation.json
+report_output.pdf
+
+# Large data files
+*.xlsx
+!Bisoprolol_icsr_sample_1068rows.xlsx
+
+# Development scripts
+run_server.bat
+scripts/

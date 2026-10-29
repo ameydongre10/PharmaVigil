@@ -1,10 +1,11 @@
-# Multi-stage / optimized Python Dockerfile for GenAR PADER Regulatory Engine
-FROM python:3.11-slim
+# Multi-stage optimized Python Dockerfile for PharmaVigil PADER Regulatory Engine
+FROM python:3.11-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    ENVIRONMENT=production
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,10 +20,18 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
-COPY . .
+COPY src/ ./src/
+COPY app.py .
+COPY sample_data/ ./sample_data/
+COPY Bisoprolol_icsr_sample_1068rows.xlsx .
 
-# Ensure outputs directory exists
-RUN mkdir -p outputs sample_data
+# Create non-root user and set ownership
+RUN useradd -m -u 1000 pharmavigil && \
+    mkdir -p outputs && \
+    chown -R pharmavigil:pharmavigil /app
+
+# Switch to non-root user
+USER pharmavigil
 
 # Expose port (Render/Cloud providers dynamically set PORT env var)
 EXPOSE 8000

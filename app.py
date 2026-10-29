@@ -24,10 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Header, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Header, BackgroundTasks, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from enum import Enum
 
 from src.data_loader import load_and_normalize_data, validate_data
 from src.analysis_engine import AnalysisEngine
@@ -54,23 +55,20 @@ from src.auth import (
 init_auth_db()
 
 app = FastAPI(
-    title="GenAR PADER Regulatory Report Engine",
+    title="PharmaVigil PADER Regulatory Report Engine",
     description="Automated, Deterministically-Grounded Periodic Adverse Drug Experience Report (PADER) Generation and Regulatory Review System.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# CORS configuration
+# Load settings
+from src.settings import settings
+
+# CORS configuration from environment
 app.add_middleware(
     CORSMiddleware,
-    # A wildcard origin combined with credentials is rejected by browsers and
-    # makes credentialed API access available to arbitrary websites.
-    allow_origins=[
-        "https://ameydongre10.github.io",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -104,17 +102,21 @@ FALLBACK_SAMPLE_PATH = SAMPLE_DATA_DIR / "sample_icsr_dataset.xlsx"
 ACTIVE_DATASET_PATH: Optional[str] = None
 
 
-def persist_reports() -> None:
-    """Persist cached reports to the application's SQLite database."""
+def persist_report(report_id: str, report: "PADERReport") -> None:
+    """Persist a single report to SQLite, preserving created_at on updates."""
     from src.auth import get_db_connection
     conn = get_db_connection()
     now = datetime.now(timezone.utc).isoformat()
     try:
         conn.execute("BEGIN IMMEDIATE")
-        conn.executemany(
+        # Check if report already exists to preserve created_at
+        existing = conn.execute("SELECT created_at FROM reports WHERE report_id = ?", (report_id,)).fetchone()
+        created_at = existing["created_at"] if existing else now
+        
+        conn.execute(
             "INSERT INTO reports (report_id, report_json, created_at, updated_at) VALUES (?, ?, ?, ?) "
             "ON CONFLICT(report_id) DO UPDATE SET report_json=excluded.report_json, updated_at=excluded.updated_at",
-            [(rid, report.model_dump_json(), now, now) for rid, report in REPORTS_DB.items()],
+            (report_id, report.model_dump_json(), created_at, now)
         )
         conn.commit()
     except Exception:
@@ -147,16 +149,42 @@ def require_user(authorization: Optional[str]) -> Dict[str, Any]:
     return user
 
 
+class LLMProviderEnum(str, Enum):
+    """Valid LLM providers."""
+    MOCK = "mock"
+    OPENAI = "openai"
+    GEMINI = "gemini"
+    ANTHROPIC = "anthropic"
+    GENERIC = "generic"
+
+
+class UserRoleEnum(str, Enum):
+    """Valid user roles."""
+    DOCTOR = "doctor"
+    VERIFIER = "verifier"
+    ANALYST = "analyst"
+    USER = "user"
+
+
+class ReviewDecisionEnum(str, Enum):
+    """Valid review decisions."""
+    APPROVED = "APPROVED"
+    NEEDS_REVISION = "NEEDS_REVISION"
+    REJECTED = "REJECTED"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    SIMULATED_APPROVED = "SIMULATED_APPROVED"
+
+
 class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=1, description="Unique username or email")
+    username: str = Field(..., min_length=1, max_length=100, description="Unique username or email")
     password: str = Field(..., min_length=12, max_length=256, description="Password (12-256 characters)")
-    full_name: str = Field(..., min_length=1, description="Full Name and medical title")
+    full_name: str = Field(..., min_length=1, max_length=200, description="Full Name and medical title")
     # Public self-registration does not grant medical reviewer privileges.
-    role: str = Field("analyst", description="Self-registration role: analyst or user")
-    email: Optional[str] = None
-    medical_license: Optional[str] = Field(None, description="Medical registration/license number (required for doctors)")
-    specialty: Optional[str] = Field(None, description="Clinical specialty, e.g. Pharmacovigilance")
-    affiliation: Optional[str] = Field(None, description="Hospital or institutional affiliation")
+    role: UserRoleEnum = Field(UserRoleEnum.ANALYST, description="Self-registration role: analyst or user")
+    email: Optional[str] = Field(None, max_length=200)
+    medical_license: Optional[str] = Field(None, max_length=100, description="Medical registration/license number (required for doctors)")
+    specialty: Optional[str] = Field(None, max_length=200, description="Clinical specialty, e.g. Pharmacovigilance")
+    affiliation: Optional[str] = Field(None, max_length=200, description="Hospital or institutional affiliation")
 
 
 class LoginRequest(BaseModel):
@@ -165,24 +193,38 @@ class LoginRequest(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    file_path: Optional[str] = Field(None, description="Path to an uploaded dataset returned by this server")
-    llm_provider: Optional[str] = Field("mock", description="LLM provider: mock, openai, gemini, anthropic, or generic")
-    api_key: Optional[str] = Field(None, description="LLM API key (if live generation is selected)")
-    model_name: Optional[str] = Field("gpt-4o-mini", description="LLM model identifier")
-    base_url: Optional[str] = Field(None, description="Custom LLM API Base URL")
+    file_path: Optional[str] = Field(None, max_length=500, description="Path to an uploaded dataset returned by this server")
+    llm_provider: LLMProviderEnum = Field(LLMProviderEnum.MOCK, description="LLM provider: mock, openai, gemini, anthropic, or generic")
+    api_key: Optional[str] = Field(None, max_length=500, description="LLM API key (never logged or persisted)")
+    model_name: Optional[str] = Field("gpt-4o-mini", max_length=100, description="LLM model identifier")
+    base_url: Optional[str] = Field(None, max_length=500, description="Custom LLM API Base URL (allowlisted hosts only)")
     review_decision: Optional[str] = Field("PENDING_REVIEW", description="Initial review decision")
-    reviewer_name: Optional[str] = Field("Qualified Safety Reviewer", description="Name of the reviewer")
-    reviewer_notes: Optional[str] = Field(None, description="Review notes")
+    reviewer_name: Optional[str] = Field("Qualified Safety Reviewer", max_length=200, description="Name of the reviewer")
+    reviewer_notes: Optional[str] = Field(None, max_length=2000, description="Review notes")
+    
+    @field_validator('base_url')
+    @classmethod
+    def validate_base_url(cls, v):
+        """Prevent SSRF by allowlisting provider hosts."""
+        if v:
+            from urllib.parse import urlparse
+            parsed = urlparse(v)
+            if parsed.hostname not in settings.ALLOWED_LLM_HOSTS:
+                raise ValueError(
+                    f"LLM provider host '{parsed.hostname}' is not allowed. "
+                    f"Allowed hosts: {', '.join(settings.ALLOWED_LLM_HOSTS)}"
+                )
+        return v
 
 
 class ReviewRequest(BaseModel):
-    decision: str = Field(..., description="Decision: APPROVED, NEEDS_REVISION, REJECTED, or SIMULATED_APPROVED")
-    reviewer_name: Optional[str] = Field("Qualified Safety Reviewer", description="Full Name and Title of Reviewer")
-    notes: Optional[str] = Field("", description="Sign-off notes or audit rationale")
-    doctor_license: Optional[str] = Field(None, description="Medical License / Registration Number")
-    specialty: Optional[str] = Field(None, description="Specialty / Department")
-    affiliation: Optional[str] = Field(None, description="Hospital or institutional affiliation")
-    token: Optional[str] = Field(None, description="Session token if Authorization header not provided")
+    decision: ReviewDecisionEnum = Field(..., description="Decision: APPROVED, NEEDS_REVISION, REJECTED, or SIMULATED_APPROVED")
+    reviewer_name: Optional[str] = Field("Qualified Safety Reviewer", max_length=200, description="Full Name and Title of Reviewer")
+    notes: Optional[str] = Field("", max_length=5000, description="Sign-off notes or audit rationale")
+    doctor_license: Optional[str] = Field(None, max_length=100, description="Medical License / Registration Number")
+    specialty: Optional[str] = Field(None, max_length=200, description="Specialty / Department")
+    affiliation: Optional[str] = Field(None, max_length=200, description="Hospital or institutional affiliation")
+    token: Optional[str] = Field(None, max_length=500, description="Session token if Authorization header not provided")
 
 
 class ReportMetadataUpdate(BaseModel):
@@ -220,13 +262,32 @@ def get_active_dataset_path(preferred_path: Optional[str] = None) -> str:
 
 @app.api_route("/api/health", methods=["GET", "HEAD"], tags=["System"])
 def health_check():
-    """Health check endpoint for Render / cloud load balancers."""
+    """Liveness check endpoint for Render / cloud load balancers. Never fails."""
     return {
         "status": "healthy",
-        "service": "pader-regulatory-engine",
+        "service": "pharmavigil-regulatory-engine",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "version": "1.0.0",
-        "active_dataset": Path(get_active_dataset_path()).name,
+        "version": "1.0.0"
+    }
+
+
+@app.get("/api/ready", tags=["System"])
+def readiness_check():
+    """Readiness check with dataset availability status."""
+    try:
+        dataset_path = get_active_dataset_path()
+        dataset_name = Path(dataset_path).name
+        dataset_available = True
+    except HTTPException:
+        dataset_name = None
+        dataset_available = False
+    
+    return {
+        "status": "ready" if dataset_available else "not_ready",
+        "service": "pharmavigil-regulatory-engine",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "dataset_available": dataset_available,
+        "active_dataset": dataset_name,
         "sample_data_ready": DEFAULT_SAMPLE_PATH.exists() or FALLBACK_SAMPLE_PATH.exists()
     }
 
@@ -238,14 +299,14 @@ def health_check():
 @app.post("/api/auth/register", tags=["Authentication"])
 def register(req: RegisterRequest):
     """Registers a new user (Doctor/Verifier or Safety Analyst) with credentials and role."""
-    if req.role.strip().lower() not in ("analyst", "user"):
+    if req.role not in (UserRoleEnum.ANALYST, UserRoleEnum.USER):
         raise HTTPException(status_code=403, detail="Self-registration is limited to analyst or user accounts.")
     try:
         user = register_user(
             username=req.username,
             password=req.password,
             full_name=req.full_name,
-            role=req.role,
+            role=req.role.value,
             email=req.email,
             medical_license=req.medical_license,
             specialty=req.specialty,
@@ -302,8 +363,9 @@ def logout(authorization: Optional[str] = Header(None)):
 # ===========================================================================
 
 @app.get("/api/sample-data", tags=["Dataset"])
-def get_sample_data_summary(file_path: Optional[str] = Query(None)):
-    """Returns metadata and preview statistics for the active dataset (or requested path)."""
+def get_sample_data_summary(file_path: Optional[str] = Query(None), authorization: Optional[str] = Header(None)):
+    """Returns metadata and preview statistics for the active dataset (or requested path). Requires authentication."""
+    require_user(authorization)
     path = get_active_dataset_path(file_path)
     df = load_and_normalize_data(path)
     engine = AnalysisEngine(df)
@@ -337,8 +399,9 @@ def get_sample_data_summary(file_path: Optional[str] = Query(None)):
 
 
 @app.post("/api/upload", tags=["Dataset"])
-async def upload_dataset(file: UploadFile = File(...)):
-    """Uploads an ICSR dataset (.xlsx or .csv), validates its schema robustly, and sets it as the active dataset."""
+async def upload_dataset(file: UploadFile = File(...), authorization: Optional[str] = Header(None)):
+    """Uploads an ICSR dataset (.xlsx or .csv), validates its schema robustly, and sets it as the active dataset. Requires authentication."""
+    require_user(authorization)
     global ACTIVE_DATASET_PATH
     fname = (file.filename or "").lower()
     if not (fname.endswith(".xlsx") or fname.endswith(".csv")):
@@ -416,8 +479,9 @@ async def upload_dataset(file: UploadFile = File(...)):
 
 
 @app.post("/api/dataset/reset", tags=["Dataset"])
-def reset_dataset():
-    """Resets the active dataset back to the default bundled Bisoprolol reference dataset."""
+def reset_dataset(authorization: Optional[str] = Header(None)):
+    """Resets the active dataset back to the default bundled Bisoprolol reference dataset. Requires authentication."""
+    require_user(authorization)
     global ACTIVE_DATASET_PATH
     ACTIVE_DATASET_PATH = None
     app.state.active_dataset_name = None
@@ -429,8 +493,9 @@ def reset_dataset():
 # ===========================================================================
 
 @app.post("/api/generate", tags=["PADER Pipeline"])
-def generate_report(req: GenerateRequest):
-    """Executes the complete PADER regulatory generation pipeline on the active or provided dataset."""
+def generate_report(req: GenerateRequest, authorization: Optional[str] = Header(None)):
+    """Executes the complete PADER regulatory generation pipeline on the active or provided dataset. Requires authentication."""
+    require_user(authorization)
     file_path = get_active_dataset_path(req.file_path)
     # Never permit a client-supplied arbitrary server path to be processed.
     # Explicit paths are supported only for files created by the upload route.
@@ -438,15 +503,15 @@ def generate_report(req: GenerateRequest):
         raise HTTPException(status_code=400, detail="Specified dataset must be uploaded through /api/upload.")
 
     # Configure LLM Client
-    if req.llm_provider.lower() == "mock" or not req.api_key:
+    if req.llm_provider == LLMProviderEnum.MOCK or not req.api_key:
         client = MockLLMClient()
     else:
         # Determine base URL if not provided
         base_url = req.base_url
         if not base_url:
-            if req.llm_provider.lower() == "gemini":
+            if req.llm_provider == LLMProviderEnum.GEMINI:
                 base_url = "https://generativelanguage.googleapis.com/v1beta/openai"
-            elif req.llm_provider.lower() == "anthropic":
+            elif req.llm_provider == LLMProviderEnum.ANTHROPIC:
                 base_url = "https://api.anthropic.com/v1"
             else:
                 base_url = "https://api.openai.com/v1"
@@ -476,7 +541,7 @@ def generate_report(req: GenerateRequest):
     if report.evaluation:
         report.evaluation.report_id = report_id
     REPORTS_DB[report_id] = report
-    persist_reports()
+    persist_report(report_id, report)
 
     # Render markdown
     assembler = ReportAssembler()
@@ -544,7 +609,7 @@ def update_report_metadata(report_id: str, req: ReportMetadataUpdate, authorizat
     for field, value in updates.items():
         setattr(report.metadata, field, value)
     REPORTS_DB[report_id] = report
-    persist_reports()
+    persist_report(report_id, report)
     return report.model_dump()
 
 
@@ -560,7 +625,7 @@ def delete_report(report_id: str, authorization: Optional[str] = Header(None)):
     if report.review_record or report.status != ReportStatus.DRAFT_PENDING_REVIEW:
         raise HTTPException(status_code=409, detail="Reviewed reports cannot be deleted.")
     del REPORTS_DB[report_id]
-    persist_reports()
+    # Delete from database directly
     from src.auth import get_db_connection
     conn = get_db_connection()
     try:
@@ -594,11 +659,13 @@ def download_report(report_id: str, authorization: Optional[str] = Header(None))
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
     assembler = ReportAssembler()
     md = assembler.to_markdown(REPORTS_DB[report_id])
-    filename = f"{report_id}.md"
+    # Sanitize report_id for safe filename usage (prevent header injection and path traversal)
+    safe_report_id = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in report_id)
+    filename = f"{safe_report_id}.md"
     return Response(
         content=md,
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
 
@@ -614,9 +681,17 @@ def review_report(report_id: str, req: ReviewRequest, authorization: Optional[st
     """
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail=f"Report {report_id} not found.")
+    
+    # Check that report is in a reviewable state
+    report = REPORTS_DB[report_id]
+    if report.status not in (ReportStatus.DRAFT_PENDING_REVIEW, ReportStatus.NEEDS_REVISION):
+        raise HTTPException(
+            status_code=409, 
+            detail=f"Report status is '{report.status.value}'. Only DRAFT_PENDING_REVIEW and NEEDS_REVISION reports can be reviewed."
+        )
 
     try:
-        decision_enum = ReviewDecision(req.decision)
+        decision_enum = ReviewDecision(req.decision.value)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid decision. Must be one of: {[d.value for d in ReviewDecision]}")
 
@@ -657,33 +732,59 @@ def review_report(report_id: str, req: ReviewRequest, authorization: Optional[st
             "affiliation": "Test Harness"
         }
 
-    # Record verification in database with cryptographic signature
-    verif_record = record_doctor_verification(
-        report_id=report_id,
-        doctor_user=doctor_user,
-        decision=decision_enum.value,
-        notes=req.notes
-    )
+    # Use database transaction for review to prevent double-review races
+    from src.auth import get_db_connection
+    conn = get_db_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        
+        # Record verification in database with cryptographic signature
+        verif_record = record_doctor_verification(
+            report_id=report_id,
+            doctor_user=doctor_user,
+            decision=decision_enum.value,
+            notes=req.notes,
+            db_path=None  # Uses default connection
+        )
 
-    mgr = HumanReviewManager()
-    updated_report = mgr.apply_decision(
-        report=REPORTS_DB[report_id],
-        decision=decision_enum,
-        reviewer_name=doctor_user.get("full_name") or req.reviewer_name,
-        notes=req.notes,
-        is_simulated=(decision_enum == ReviewDecision.SIMULATED_APPROVED),
-        doctor_license=doctor_user.get("medical_license"),
-        specialty=doctor_user.get("specialty"),
-        affiliation=doctor_user.get("affiliation"),
-        verification_id=verif_record.get("verification_id"),
-        signature_hash=verif_record.get("signature_hash")
-    )
+        mgr = HumanReviewManager()
+        updated_report = mgr.apply_decision(
+            report=REPORTS_DB[report_id],
+            decision=decision_enum,
+            reviewer_name=doctor_user.get("full_name") or req.reviewer_name,
+            notes=req.notes,
+            is_simulated=(decision_enum == ReviewDecision.SIMULATED_APPROVED),
+            doctor_license=doctor_user.get("medical_license"),
+            specialty=doctor_user.get("specialty"),
+            affiliation=doctor_user.get("affiliation"),
+            verification_id=verif_record.get("verification_id"),
+            signature_hash=verif_record.get("signature_hash")
+        )
 
-    REPORTS_DB[report_id] = updated_report
-    persist_reports()
+        REPORTS_DB[report_id] = updated_report
+        
+        # Persist to database within same transaction
+        now = datetime.now(timezone.utc).isoformat()
+        existing = conn.execute("SELECT created_at FROM reports WHERE report_id = ?", (report_id,)).fetchone()
+        created_at = existing["created_at"] if existing else now
+        
+        conn.execute(
+            "INSERT INTO reports (report_id, report_json, created_at, updated_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(report_id) DO UPDATE SET report_json=excluded.report_json, updated_at=excluded.updated_at",
+            (report_id, updated_report.model_dump_json(), created_at, now)
+        )
+        
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
-    # Save to disk as well
-    review_path = OUTPUTS_DIR / "review.json"
+    # Save per-report audit record (not a global review.json that overwrites)
+    # Sanitize report_id for safe filename usage
+    safe_report_id = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in report_id)
+    review_path = OUTPUTS_DIR / f"review_{safe_report_id}.json"
     if updated_report.review_record:
         with open(review_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(updated_report.review_record.model_dump(), indent=2))
@@ -748,4 +849,5 @@ def serve_dashboard():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)
+    reload = settings.RELOAD
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=reload)

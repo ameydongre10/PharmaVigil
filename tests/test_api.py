@@ -17,7 +17,7 @@ def test_health_check(client):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "pader-regulatory-engine"
+    assert data["service"] == "pharmavigil-regulatory-engine"
 
 
 def test_cors_rejects_untrusted_credentialed_origin(client):
@@ -35,13 +35,19 @@ def test_cors_rejects_untrusted_credentialed_origin(client):
 def test_generate_rejects_arbitrary_local_file_path(client, tmp_path):
     outside_file = tmp_path / "private.csv"
     outside_file.write_text("safety_report_id,adverse_event\n1,Example", encoding="utf-8")
-    response = client.post("/api/generate", json={"file_path": str(outside_file), "llm_provider": "mock"})
+    # Login first since generate now requires auth
+    login = client.post("/api/auth/login", json={"username": "doctor@pharmavigil.org", "password": "doctor123"})
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+    response = client.post("/api/generate", json={"file_path": str(outside_file), "llm_provider": "mock"}, headers=headers)
     assert response.status_code == 400
     assert "uploaded through /api/upload" in response.json()["detail"]
 
 
 def test_sample_data_endpoint(client):
-    response = client.get("/api/sample-data")
+    # Login first since sample-data now requires auth
+    login = client.post("/api/auth/login", json={"username": "analyst@pharmavigil.org", "password": "analyst123"})
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+    response = client.get("/api/sample-data", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert "total_rows" in data
@@ -51,12 +57,16 @@ def test_sample_data_endpoint(client):
 
 
 def test_generate_report_pipeline(client):
+    # Login first since generate now requires auth
+    login = client.post("/api/auth/login", json={"username": "analyst@pharmavigil.org", "password": "analyst123"})
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+    
     payload = {
         "llm_provider": "mock",
         "model_name": "mock-model-v1",
         "reviewer_name": "Test Reviewer, MD"
     }
-    response = client.post("/api/generate", json=payload)
+    response = client.post("/api/generate", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"
@@ -65,9 +75,6 @@ def test_generate_report_pipeline(client):
     assert data["report_status"] == "DRAFT_PENDING_REVIEW"
     assert data["evaluation"]["required_sections_present"] == 8
     assert data["evaluation"]["automated_evaluation_status"] == "PASS"
-
-    login = client.post("/api/auth/login", json={"username": "doctor@pharmavigil.org", "password": "doctor123"})
-    headers = {"Authorization": f"Bearer {login.json()['token']}"}
 
     # Test report retrieval
     get_res = client.get(f"/api/reports/{report_id}", headers=headers)
@@ -80,12 +87,19 @@ def test_generate_report_pipeline(client):
 
 
 def test_human_review_sign_off(client):
+    # Login as analyst to generate draft
+    analyst_login = client.post("/api/auth/login", json={
+        "username": "analyst@pharmavigil.org",
+        "password": "analyst123",
+    })
+    analyst_headers = {"Authorization": f"Bearer {analyst_login.json()['token']}"}
+    
     # First generate draft
-    gen_res = client.post("/api/generate", json={"llm_provider": "mock"})
+    gen_res = client.post("/api/generate", json={"llm_provider": "mock"}, headers=analyst_headers)
     assert gen_res.status_code == 200
     report_id = gen_res.json()["report_id"]
 
-    # Submit Human Approval
+    # Submit Human Approval as doctor
     rev_payload = {
         "decision": "APPROVED",
         "reviewer_name": "Dr. Sarah Connor, Chief Medical Officer",

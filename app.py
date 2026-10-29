@@ -738,13 +738,13 @@ def review_report(report_id: str, req: ReviewRequest, authorization: Optional[st
     try:
         conn.execute("BEGIN IMMEDIATE")
         
-        # Record verification in database with cryptographic signature
+        # Record verification in database with cryptographic signature (within same transaction)
         verif_record = record_doctor_verification(
             report_id=report_id,
             doctor_user=doctor_user,
             decision=decision_enum.value,
             notes=req.notes,
-            db_path=None  # Uses default connection
+            conn=conn  # Pass connection to avoid nested transaction
         )
 
         mgr = HumanReviewManager()

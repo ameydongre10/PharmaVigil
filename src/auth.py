@@ -355,11 +355,13 @@ def record_doctor_verification(
     doctor_user: Dict[str, Any],
     decision: str,
     notes: Optional[str] = None,
-    db_path: Optional[Path] = None
+    db_path: Optional[Path] = None,
+    conn: Optional[sqlite3.Connection] = None
 ) -> Dict[str, Any]:
     """
     Persists an authentic, verified doctor sign-off with a cryptographic signature hash.
     Enforces that user must have doctor or verifier role.
+    If conn is provided, uses that connection (must be within a transaction).
     """
     if doctor_user.get("role") not in ("doctor", "verifier"):
         raise PermissionError(
@@ -380,28 +382,37 @@ def record_doctor_verification(
         verified_at=now_utc
     )
 
-    conn = get_db_connection(db_path)
+    # Use provided connection or create new one
+    should_close = False
+    if not conn:
+        conn = get_db_connection(db_path)
+        should_close = True
+    
     cur = conn.cursor()
-    cur.execute("""
-    INSERT INTO verifications (
-        verification_id, report_id, user_id, doctor_name, medical_license,
-        specialty, affiliation, decision, notes, verified_at_utc, signature_hash
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        verification_id,
-        report_id,
-        doctor_user["id"],
-        doctor_name,
-        license_no,
-        doctor_user.get("specialty"),
-        doctor_user.get("affiliation"),
-        decision,
-        notes,
-        now_utc,
-        sig_hash
-    ))
-    conn.commit()
-    conn.close()
+    try:
+        cur.execute("""
+        INSERT INTO verifications (
+            verification_id, report_id, user_id, doctor_name, medical_license,
+            specialty, affiliation, decision, notes, verified_at_utc, signature_hash
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            verification_id,
+            report_id,
+            doctor_user["id"],
+            doctor_name,
+            license_no,
+            doctor_user.get("specialty"),
+            doctor_user.get("affiliation"),
+            decision,
+            notes,
+            now_utc,
+            sig_hash
+        ))
+        if should_close:
+            conn.commit()
+    finally:
+        if should_close:
+            conn.close()
 
     return {
         "verification_id": verification_id,

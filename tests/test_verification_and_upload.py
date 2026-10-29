@@ -19,7 +19,27 @@ def client():
     return TestClient(app)
 
 
-def test_custom_dataset_upload_and_analysis(client, tmp_path):
+@pytest.fixture
+def analyst_auth(client):
+    """Returns auth headers for analyst user."""
+    login = client.post("/api/auth/login", json={
+        "username": "analyst@pharmavigil.org",
+        "password": "analyst123"
+    })
+    return {"Authorization": f"Bearer {login.json()['token']}"}
+
+
+@pytest.fixture
+def doctor_auth(client):
+    """Returns auth headers for doctor user."""
+    login = client.post("/api/auth/login", json={
+        "username": "doctor@pharmavigil.org",
+        "password": "doctor123"
+    })
+    return {"Authorization": f"Bearer {login.json()['token']}"}
+
+
+def test_custom_dataset_upload_and_analysis(client, analyst_auth):
     """Requirement 1: Upload new CSV/Excel datasets and analyze the uploaded dataset instead of default."""
     csv_content = """safety_report_id,received_date,serious,alert,occur_country,age,gender,adverse_event,medicinal_product
 AMOX-001,2024-01-15,1,1,USA,45,Male,Anaphylactic reaction,Amoxicillin
@@ -30,7 +50,8 @@ AMOX-004,2024-02-18,0,0,DEU,27,Male,Nausea,Amoxicillin
     file_bytes = io.BytesIO(csv_content.encode("utf-8"))
     upload_res = client.post(
         "/api/upload",
-        files={"file": ("amoxicillin_study.csv", file_bytes, "text/csv")}
+        files={"file": ("amoxicillin_study.csv", file_bytes, "text/csv")},
+        headers=analyst_auth
     )
     assert upload_res.status_code == 200
     up_data = upload_res.json()
@@ -43,7 +64,7 @@ AMOX-004,2024-02-18,0,0,DEU,27,Male,Nausea,Amoxicillin
     assert up_data["top_reactions"]["Anaphylactic reaction"] == 1
 
     # Verify /api/sample-data returns the active uploaded dataset summary
-    summary_res = client.get("/api/sample-data")
+    summary_res = client.get("/api/sample-data", headers=analyst_auth)
     assert summary_res.status_code == 200
     summary_data = summary_res.json()
     assert summary_data["total_cases"] == 4
@@ -53,7 +74,7 @@ AMOX-004,2024-02-18,0,0,DEU,27,Male,Nausea,Amoxicillin
     gen_res = client.post("/api/generate", json={
         "file_path": up_data["stored_path"],
         "llm_provider": "mock"
-    })
+    }, headers=analyst_auth)
     assert gen_res.status_code == 200
     gen_data = gen_res.json()
     assert gen_data["product_name"] == "AMOXICILLIN"
@@ -68,9 +89,9 @@ AMOX-004,2024-02-18,0,0,DEU,27,Male,Nausea,Amoxicillin
     assert vol_table["serious_pct"] == 50.0
 
     # Reset active dataset back to bundled benchmark
-    reset_res = client.post("/api/dataset/reset")
+    reset_res = client.post("/api/dataset/reset", headers=analyst_auth)
     assert reset_res.status_code == 200
-    reset_summary = client.get("/api/sample-data").json()
+    reset_summary = client.get("/api/sample-data", headers=analyst_auth).json()
     assert reset_summary["total_cases"] == 1024
 
 

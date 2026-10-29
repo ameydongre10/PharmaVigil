@@ -195,8 +195,8 @@ def test_request_body_limit_rejects_known_oversize(client):
     assert response.status_code == 413
 
 
-def test_report_crud_requires_auth_and_preserves_reviewed_reports(client):
-    generated = client.post("/api/generate", json={"llm_provider": "mock"}).json()
+def test_report_crud_requires_auth_and_preserves_reviewed_reports(client, analyst_auth):
+    generated = client.post("/api/generate", json={"llm_provider": "mock"}, headers=analyst_auth).json()
     report_id = generated["report_id"]
     assert client.get("/api/reports").status_code == 401
 
@@ -217,19 +217,12 @@ def test_report_crud_requires_auth_and_preserves_reviewed_reports(client):
     assert client.get(f"/api/reports/{report_id}", headers=headers).status_code == 404
 
 
-def test_doctor_verification_and_database_audit(client):
+def test_doctor_verification_and_database_audit(client, analyst_auth, doctor_auth):
     """Requirements 2 & 4: Doctor Human Verification clearly associated and validated by backend/database."""
     # Generate draft
-    gen_res = client.post("/api/generate", json={"llm_provider": "mock"})
+    gen_res = client.post("/api/generate", json={"llm_provider": "mock"}, headers=analyst_auth)
     assert gen_res.status_code == 200
     report_id = gen_res.json()["report_id"]
-
-    # Login as Doctor
-    login_res = client.post("/api/auth/login", json={
-        "username": "doctor@pharmavigil.org",
-        "password": "doctor123"
-    })
-    token = login_res.json()["token"]
 
     # Submit Doctor Verification
     rev_payload = {
@@ -239,7 +232,7 @@ def test_doctor_verification_and_database_audit(client):
     rev_res = client.post(
         f"/api/reports/{report_id}/review",
         json=rev_payload,
-        headers={"Authorization": f"Bearer {token}"}
+        headers=doctor_auth
     )
     assert rev_res.status_code == 200
     rev_data = rev_res.json()
@@ -262,17 +255,17 @@ def test_doctor_verification_and_database_audit(client):
     assert v_info["verification"]["signature_hash"] == rec["signature_hash"]
 
     # Verify Markdown export contains official doctor sign-off section
-    md_res = client.get(f"/api/reports/{report_id}/markdown", headers={"Authorization": f"Bearer {token}"})
+    md_res = client.get(f"/api/reports/{report_id}/markdown", headers=doctor_auth)
     assert md_res.status_code == 200
     assert "## Human Review & Medical Verification Sign-Off" in md_res.text
     assert "MED-PV-849201" in md_res.text
     assert rec["signature_hash"] in md_res.text
 
 
-def test_verification_validation_blocks_unauthorized_access(client):
+def test_verification_validation_blocks_unauthorized_access(client, analyst_auth):
     """Requirement 4: Verification cannot simply be marked as verified without doctor authorization."""
     # Generate draft
-    gen_res = client.post("/api/generate", json={"llm_provider": "mock"})
+    gen_res = client.post("/api/generate", json={"llm_provider": "mock"}, headers=analyst_auth)
     assert gen_res.status_code == 200
     report_id = gen_res.json()["report_id"]
 
@@ -309,7 +302,7 @@ def test_verification_validation_blocks_unauthorized_access(client):
     assert "Only authenticated medical professionals with the Doctor/Verifier role" in ana_rev.json()["detail"]
 
 
-def test_excel_dataset_upload_and_analysis(client):
+def test_excel_dataset_upload_and_analysis(client, analyst_auth):
     """Requirement 1: Verify Excel (.xlsx) dataset upload and processing."""
     import pandas as pd
     df = pd.DataFrame([
@@ -342,7 +335,8 @@ def test_excel_dataset_upload_and_analysis(client):
 
     upload_res = client.post(
         "/api/upload",
-        files={"file": ("cefalexin_study.xlsx", buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files={"file": ("cefalexin_study.xlsx", buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        headers=analyst_auth
     )
     assert upload_res.status_code == 200
     up_data = upload_res.json()
@@ -350,77 +344,79 @@ def test_excel_dataset_upload_and_analysis(client):
     assert up_data["total_cases"] == 2
     assert up_data["serious_cases"] == 1
     assert up_data["serious_percentage"] == 50.0
-    client.post("/api/dataset/reset")
+    client.post("/api/dataset/reset", headers=analyst_auth)
 
 
-def test_upload_rejects_file_over_limit(client):
+def test_upload_rejects_file_over_limit(client, analyst_auth):
     oversized = io.BytesIO(b"x" * (25 * 1024 * 1024 + 1))
     response = client.post(
         "/api/upload",
         files={"file": ("large.csv", oversized, "text/csv")},
+        headers=analyst_auth
     )
     assert response.status_code == 413
     assert "25 MiB" in response.json()["detail"]
 
 
-def test_upload_storage_name_is_not_client_controlled(client):
+def test_upload_storage_name_is_not_client_controlled(client, analyst_auth):
     csv_content = "safety_report_id,adverse_event\nSAFE-001,Rash\n"
     response = client.post(
         "/api/upload",
         files={"file": ("../../same.csv", io.BytesIO(csv_content.encode()), "text/csv")},
+        headers=analyst_auth
     )
     assert response.status_code == 200
     stored_path = Path(response.json()["stored_path"]).resolve()
     assert stored_path.parent == (Path(__file__).resolve().parents[1] / "outputs").resolve()
     assert stored_path.name != "same.csv"
     # Reset back to benchmark dataset
-    client.post("/api/dataset/reset")
+    client.post("/api/dataset/reset", headers=analyst_auth)
 
 
-def test_upload_validation_errors(client):
+def test_upload_validation_errors(client, analyst_auth):
     """Tests strict validation and meaningful errors for upload edge cases."""
     # 1. Invalid file type (.pdf)
-    res_pdf = client.post("/api/upload", files={"file": ("trial.pdf", io.BytesIO(b"%PDF-1.4 header"), "application/pdf")})
+    res_pdf = client.post("/api/upload", files={"file": ("trial.pdf", io.BytesIO(b"%PDF-1.4 header"), "application/pdf")}, headers=analyst_auth)
     assert res_pdf.status_code == 400
     assert "Invalid file type" in res_pdf.json()["detail"]
 
     # 2. Empty dataset (0 bytes)
-    res_empty = client.post("/api/upload", files={"file": ("empty.csv", io.BytesIO(b""), "text/csv")})
+    res_empty = client.post("/api/upload", files={"file": ("empty.csv", io.BytesIO(b""), "text/csv")}, headers=analyst_auth)
     assert res_empty.status_code == 400
     assert "Empty dataset" in res_empty.json()["detail"]
 
     # 3. Malformed CSV (unclosed quote error)
-    res_malformed = client.post("/api/upload", files={"file": ("malformed.csv", io.BytesIO(b"col1,col2\n\"unclosed quote,123"), "text/csv")})
+    res_malformed = client.post("/api/upload", files={"file": ("malformed.csv", io.BytesIO(b"col1,col2\n\"unclosed quote,123"), "text/csv")}, headers=analyst_auth)
     assert res_malformed.status_code == 400
     assert "Malformed CSV file" in res_malformed.json()["detail"] or "Error tokenizing" in res_malformed.json()["detail"]
 
     # 4. Missing required ICSR fields (unrelated data schema)
-    res_groceries = client.post("/api/upload", files={"file": ("groceries.csv", io.BytesIO(b"item,price,quantity\nApple,1.5,10\nBanana,0.8,20"), "text/csv")})
+    res_groceries = client.post("/api/upload", files={"file": ("groceries.csv", io.BytesIO(b"item,price,quantity\nApple,1.5,10\nBanana,0.8,20"), "text/csv")}, headers=analyst_auth)
     assert res_groceries.status_code == 400
     assert "Missing required ICSR fields" in res_groceries.json()["detail"]
 
 
-def test_no_silent_fallback_on_missing_dataset(client):
+def test_no_silent_fallback_on_missing_dataset(client, analyst_auth):
     """Requirement: Never silently fall back to default dataset when a custom dataset was specified."""
-    res = client.post("/api/generate", json={"file_path": "non_existent_study_dataset.csv", "llm_provider": "mock"})
+    res = client.post("/api/generate", json={"file_path": "non_existent_study_dataset.csv", "llm_provider": "mock"}, headers=analyst_auth)
     assert res.status_code == 404
     assert "not found on the server" in res.json()["detail"]
 
 
-def test_dataset_persistence_and_reset(client):
+def test_dataset_persistence_and_reset(client, analyst_auth):
     """Requirement: Uploaded dataset becomes and remains active until explicitly reset."""
     csv_data = """case_number,event_date,serious_case,alert_case,country,patient_age,patient_sex,preferred_term,drug_name
 CASE-901,2024-04-01,1,1,FRA,42,Female,Steven-Johnson syndrome,Lamotrigine
 CASE-902,2024-04-05,0,0,DEU,35,Male,Pruritus,Lamotrigine
 """
-    upload_res = client.post("/api/upload", files={"file": ("lamotrigine_safety.csv", io.BytesIO(csv_data.encode()), "text/csv")})
+    upload_res = client.post("/api/upload", files={"file": ("lamotrigine_safety.csv", io.BytesIO(csv_data.encode()), "text/csv")}, headers=analyst_auth)
     assert upload_res.status_code == 200
     up_data = upload_res.json()
     assert up_data["total_cases"] == 2
     assert up_data["is_custom_dataset"] is True
 
     # Check sample-data endpoint returns this active uploaded dataset
-    sample_res = client.get("/api/sample-data")
+    sample_res = client.get("/api/sample-data", headers=analyst_auth)
     assert sample_res.status_code == 200
     s_data = sample_res.json()
     assert s_data["total_cases"] == 2
@@ -428,7 +424,7 @@ CASE-902,2024-04-05,0,0,DEU,35,Male,Pruritus,Lamotrigine
     assert "lamotrigine" in s_data["dataset_name"].lower()
 
     # Generate report and verify report uses the custom dataset
-    gen_res = client.post("/api/generate", json={"llm_provider": "mock"})
+    gen_res = client.post("/api/generate", json={"llm_provider": "mock"}, headers=analyst_auth)
     assert gen_res.status_code == 200
     g_data = gen_res.json()
     assert g_data["is_custom_dataset"] is True
@@ -436,8 +432,8 @@ CASE-902,2024-04-05,0,0,DEU,35,Male,Pruritus,Lamotrigine
     assert g_data["product_name"] == "LAMOTRIGINE"
 
     # Reset back to reference benchmark
-    reset_res = client.post("/api/dataset/reset")
+    reset_res = client.post("/api/dataset/reset", headers=analyst_auth)
     assert reset_res.status_code == 200
-    sample_after_reset = client.get("/api/sample-data").json()
+    sample_after_reset = client.get("/api/sample-data", headers=analyst_auth).json()
     assert sample_after_reset["is_custom_dataset"] is False
     assert sample_after_reset["total_cases"] == 1024

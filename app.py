@@ -47,7 +47,8 @@ from src.report_models import (
 from src.auth import (
     init_auth_db, register_user, authenticate_user, create_user_session,
     get_user_from_token, delete_session, record_doctor_verification,
-    get_verification_by_report
+    get_verification_by_report, get_registered_doctors, create_verification_request,
+    list_verification_requests, get_verification_request, update_verification_request_decision
 )
 
 # Initialize Authentication & Verification Database
@@ -149,10 +150,9 @@ def require_user(authorization: Optional[str]) -> Dict[str, Any]:
 
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=1, description="Unique username or email")
-    password: str = Field(..., min_length=12, max_length=256, description="Password (12-256 characters)")
+    password: str = Field(..., min_length=6, max_length=256, description="Password (min 6 characters)")
     full_name: str = Field(..., min_length=1, description="Full Name and medical title")
-    # Public self-registration does not grant medical reviewer privileges.
-    role: str = Field("analyst", description="Self-registration role: analyst or user")
+    role: str = Field("analyst", description="Role: doctor, verifier, or analyst")
     email: Optional[str] = None
     medical_license: Optional[str] = Field(None, description="Medical registration/license number (required for doctors)")
     specialty: Optional[str] = Field(None, description="Clinical specialty, e.g. Pharmacovigilance")
@@ -178,11 +178,32 @@ class GenerateRequest(BaseModel):
 class ReviewRequest(BaseModel):
     decision: str = Field(..., description="Decision: APPROVED, NEEDS_REVISION, REJECTED, or SIMULATED_APPROVED")
     reviewer_name: Optional[str] = Field("Qualified Safety Reviewer", description="Full Name and Title of Reviewer")
-    notes: Optional[str] = Field("", description="Sign-off notes or audit rationale")
+    notes: Optional[str] = Field("", description="Sign-off notes, change requests, or audit rationale")
     doctor_license: Optional[str] = Field(None, description="Medical License / Registration Number")
     specialty: Optional[str] = Field(None, description="Specialty / Department")
     affiliation: Optional[str] = Field(None, description="Hospital or institutional affiliation")
     token: Optional[str] = Field(None, description="Session token if Authorization header not provided")
+    request_id: Optional[str] = Field(None, description="Associated Verification Request ID")
+
+
+class CreateVerificationRequest(BaseModel):
+    dataset_name: str = Field(..., description="Name of the ICSR dataset")
+    stored_path: Optional[str] = Field(None, description="Path to uploaded file")
+    total_cases: Optional[int] = Field(0, description="Total cases in dataset")
+    serious_cases: Optional[int] = Field(0, description="Total serious cases")
+    serious_pct: Optional[float] = Field(0.0, description="Percentage of serious cases")
+    expedited_alerts: Optional[int] = Field(0, description="Total expedited 15-day alert cases")
+    submitted_by: Optional[str] = Field("Safety Data Analyst", description="Name/role of submitter")
+    assigned_doctor_id: Optional[int] = Field(None, description="User ID of assigned registered doctor")
+    assigned_doctor_name: Optional[str] = Field(None, description="Full name of assigned doctor")
+    assigned_doctor_license: Optional[str] = Field(None, description="Medical license of assigned doctor")
+    report_id: Optional[str] = Field(None, description="Associated PADER report ID if generated")
+
+
+class RespondVerificationRequest(BaseModel):
+    decision: str = Field(..., description="Decision: APPROVED, NEEDS_REVISION, or REJECTED")
+    notes: Optional[str] = Field("", description="Clinical change requests or audit remarks")
+    report_id: Optional[str] = Field(None, description="PADER report ID")
 
 
 class ReportMetadataUpdate(BaseModel):
@@ -238,15 +259,18 @@ def health_check():
 @app.post("/api/auth/register", tags=["Authentication"])
 def register(req: RegisterRequest):
     """Registers a new user (Doctor/Verifier or Safety Analyst) with credentials and role."""
-    if req.role.strip().lower() not in ("analyst", "user"):
-        raise HTTPException(status_code=403, detail="Self-registration is limited to analyst or user accounts.")
+    role = req.role.strip().lower()
+    if role not in ("doctor", "verifier", "analyst", "user"):
+        raise HTTPException(status_code=400, detail="Invalid role. Must be 'doctor' or 'analyst'.")
+    if role in ("doctor", "verifier") and not req.medical_license:
+        req.medical_license = f"MED-REG-{secrets.token_hex(3).upper()}"
     try:
         user = register_user(
             username=req.username,
             password=req.password,
             full_name=req.full_name,
-            role=req.role,
-            email=req.email,
+            role=role,
+            email=req.email or req.username,
             medical_license=req.medical_license,
             specialty=req.specialty,
             affiliation=req.affiliation
@@ -259,6 +283,17 @@ def register(req: RegisterRequest):
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/doctors", tags=["Authentication"])
+def list_doctors():
+    """Returns all doctors who have registered on the app, available for clinical verification assignment."""
+    doctors = get_registered_doctors()
+    return {
+        "status": "success",
+        "count": len(doctors),
+        "doctors": doctors
+    }
 
 
 @app.post("/api/auth/login", tags=["Authentication"])
@@ -682,6 +717,19 @@ def review_report(report_id: str, req: ReviewRequest, authorization: Optional[st
     REPORTS_DB[report_id] = updated_report
     persist_reports()
 
+    # Update associated verification request if provided
+    if req.request_id:
+        try:
+            update_verification_request_decision(
+                request_id=req.request_id,
+                decision=decision_enum.value,
+                doctor_user=doctor_user,
+                notes=req.notes,
+                report_id=report_id
+            )
+        except Exception:
+            pass
+
     # Save to disk as well
     review_path = OUTPUTS_DIR / "review.json"
     if updated_report.review_record:
@@ -715,6 +763,91 @@ def get_report_verification_details(report_id: str):
         "status": REPORTS_DB[report_id].status.value,
         "verification": verif
     }
+
+
+# ===========================================================================
+# VERIFICATION REQUESTS (DOCTOR WORKFLOW QUEUE) ENDPOINTS
+# ===========================================================================
+
+@app.get("/api/verification-requests", tags=["Human Review"])
+def get_verification_requests(
+    doctor_id: Optional[int] = None,
+    status: Optional[str] = None
+):
+    """Retrieves verification requests submitted to registered doctors."""
+    requests = list_verification_requests(doctor_id=doctor_id, status=status)
+    return {
+        "status": "success",
+        "count": len(requests),
+        "requests": requests
+    }
+
+
+@app.post("/api/verification-requests", tags=["Human Review"])
+def submit_verification_request(req: CreateVerificationRequest):
+    """Submits a new ICSR dataset verification request assigned to a registered doctor."""
+    assigned_doctor_name = req.assigned_doctor_name
+    assigned_doctor_license = req.assigned_doctor_license
+
+    if req.assigned_doctor_id and (not assigned_doctor_name or not assigned_doctor_license):
+        doctors = get_registered_doctors()
+        for doc in doctors:
+            if doc["id"] == req.assigned_doctor_id:
+                assigned_doctor_name = doc["full_name"]
+                assigned_doctor_license = doc.get("medical_license")
+                break
+
+    request_record = create_verification_request(
+        dataset_name=req.dataset_name,
+        stored_path=req.stored_path,
+        total_cases=req.total_cases or 0,
+        serious_cases=req.serious_cases or 0,
+        serious_pct=req.serious_pct or 0.0,
+        expedited_alerts=req.expedited_alerts or 0,
+        submitted_by=req.submitted_by or "Safety Data Analyst",
+        assigned_doctor_id=req.assigned_doctor_id,
+        assigned_doctor_name=assigned_doctor_name,
+        assigned_doctor_license=assigned_doctor_license,
+        report_id=req.report_id
+    )
+    return {
+        "status": "success",
+        "request": request_record
+    }
+
+
+@app.get("/api/verification-requests/{request_id}", tags=["Human Review"])
+def get_single_verification_request(request_id: str):
+    """Gets details of a specific verification request."""
+    req = get_verification_request(request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail=f"Verification request '{request_id}' not found.")
+    return {"status": "success", "request": req}
+
+
+@app.post("/api/verification-requests/{request_id}/respond", tags=["Human Review"])
+def respond_to_verification_request(
+    request_id: str,
+    req: RespondVerificationRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Doctor responds to a verification request with APPROVE, NEEDS_REVISION, or REJECT."""
+    doctor_user = require_user(authorization)
+    if doctor_user.get("role") not in ("doctor", "verifier"):
+        raise HTTPException(status_code=403, detail="Only authenticated doctors may respond to verification requests.")
+
+    existing = get_verification_request(request_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"Verification request '{request_id}' not found.")
+
+    updated = update_verification_request_decision(
+        request_id=request_id,
+        decision=req.decision,
+        doctor_user=doctor_user,
+        notes=req.notes,
+        report_id=req.report_id
+    )
+    return {"status": "success", "request": updated}
 
 
 # ===========================================================================

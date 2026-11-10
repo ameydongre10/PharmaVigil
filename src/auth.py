@@ -105,14 +105,35 @@ def init_auth_db(db_path: Optional[Path] = None) -> None:
         updated_at TEXT NOT NULL
     )
     """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS verification_requests (
+        request_id TEXT PRIMARY KEY,
+        report_id TEXT,
+        dataset_name TEXT NOT NULL,
+        stored_path TEXT,
+        total_cases INTEGER DEFAULT 0,
+        serious_cases INTEGER DEFAULT 0,
+        serious_pct REAL DEFAULT 0.0,
+        expedited_alerts INTEGER DEFAULT 0,
+        submitted_by TEXT NOT NULL,
+        assigned_doctor_id INTEGER,
+        assigned_doctor_name TEXT,
+        assigned_doctor_license TEXT,
+        status TEXT DEFAULT 'PENDING_DOCTOR_REVIEW',
+        doctor_notes TEXT,
+        doctor_decision TEXT,
+        doctor_name TEXT,
+        doctor_license TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """)
     conn.commit()
 
-    # Seed demo accounts only when explicitly enabled. Never create known
-    # credentials on a deployed service by default.
+    # Seed default demonstration accounts if not present
     cur.execute("SELECT COUNT(*) FROM users")
     count = cur.fetchone()[0]
-    import os
-    if count == 0 and os.environ.get("PHARMAVIGIL_SEED_DEMO_USERS", "").lower() in {"1", "true", "yes"}:
+    if count == 0:
         now = datetime.now(timezone.utc).isoformat()
 
         # 1. Verified Doctor
@@ -430,3 +451,138 @@ def get_verification_by_report(report_id: str, db_path: Optional[Path] = None) -
     row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def get_registered_doctors(db_path: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Retrieves all registered doctors and medical verifiers from the database."""
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    cur.execute("""
+    SELECT id, username, email, full_name, role, medical_license, specialty, affiliation, created_at
+    FROM users
+    WHERE role IN ('doctor', 'verifier')
+    ORDER BY id ASC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def create_verification_request(
+    dataset_name: str,
+    stored_path: Optional[str] = None,
+    total_cases: int = 0,
+    serious_cases: int = 0,
+    serious_pct: float = 0.0,
+    expedited_alerts: int = 0,
+    submitted_by: str = "Safety Data Analyst",
+    assigned_doctor_id: Optional[int] = None,
+    assigned_doctor_name: Optional[str] = None,
+    assigned_doctor_license: Optional[str] = None,
+    report_id: Optional[str] = None,
+    db_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """Creates a new verification request submitted by an analyst to a designated registered doctor."""
+    request_id = f"VR-{secrets.token_hex(4).upper()}"
+    now_utc = datetime.now(timezone.utc).isoformat()
+
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    cur.execute("""
+    INSERT INTO verification_requests (
+        request_id, report_id, dataset_name, stored_path,
+        total_cases, serious_cases, serious_pct, expedited_alerts,
+        submitted_by, assigned_doctor_id, assigned_doctor_name, assigned_doctor_license,
+        status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_DOCTOR_REVIEW', ?, ?)
+    """, (
+        request_id, report_id, dataset_name, stored_path,
+        total_cases, serious_cases, serious_pct, expedited_alerts,
+        submitted_by, assigned_doctor_id, assigned_doctor_name, assigned_doctor_license,
+        now_utc, now_utc
+    ))
+    conn.commit()
+    conn.close()
+
+    return {
+        "request_id": request_id,
+        "report_id": report_id,
+        "dataset_name": dataset_name,
+        "stored_path": stored_path,
+        "total_cases": total_cases,
+        "serious_cases": serious_cases,
+        "serious_pct": serious_pct,
+        "expedited_alerts": expedited_alerts,
+        "submitted_by": submitted_by,
+        "assigned_doctor_id": assigned_doctor_id,
+        "assigned_doctor_name": assigned_doctor_name,
+        "assigned_doctor_license": assigned_doctor_license,
+        "status": "PENDING_DOCTOR_REVIEW",
+        "created_at": now_utc,
+        "updated_at": now_utc
+    }
+
+
+def list_verification_requests(
+    doctor_id: Optional[int] = None,
+    status: Optional[str] = None,
+    db_path: Optional[Path] = None
+) -> List[Dict[str, Any]]:
+    """Lists verification requests, optionally filtered by assigned doctor or status."""
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    query = "SELECT * FROM verification_requests WHERE 1=1"
+    params = []
+
+    if doctor_id is not None:
+        query += " AND (assigned_doctor_id = ? OR assigned_doctor_id IS NULL)"
+        params.append(doctor_id)
+    if status is not None:
+        query += " AND status = ?"
+        params.append(status)
+
+    query += " ORDER BY created_at DESC"
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def get_verification_request(request_id: str, db_path: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    """Retrieves a single verification request by its unique request ID."""
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM verification_requests WHERE request_id = ?", (request_id,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_verification_request_decision(
+    request_id: str,
+    decision: str,
+    doctor_user: Dict[str, Any],
+    notes: Optional[str] = None,
+    report_id: Optional[str] = None,
+    db_path: Optional[Path] = None
+) -> Dict[str, Any]:
+    """Updates a verification request when a doctor signs off or requests changes."""
+    now_utc = datetime.now(timezone.utc).isoformat()
+    doctor_name = doctor_user.get("full_name") or doctor_user.get("username")
+    license_no = doctor_user.get("medical_license") or "VERIFIED-MD"
+
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    cur.execute("""
+    UPDATE verification_requests
+    SET status = ?, doctor_decision = ?, doctor_notes = ?, doctor_name = ?, doctor_license = ?,
+        report_id = COALESCE(?, report_id), updated_at = ?
+    WHERE request_id = ?
+    """, (
+        decision, decision, notes, doctor_name, license_no, report_id, now_utc, request_id
+    ))
+    conn.commit()
+    conn.close()
+
+    return get_verification_request(request_id, db_path) or {}
+

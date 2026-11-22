@@ -719,6 +719,16 @@
       return origin.replace(/\/+$/, "");
     }
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     let BACKEND_URL = getInitialBackendUrl();
     let authToken = localStorage.getItem("PV_AUTH_TOKEN") || null;
     let currentUser = null;
@@ -904,7 +914,7 @@
       const successBox = document.getElementById("requestSubmitSuccessMsg");
       const successText = document.getElementById("requestSubmitSuccessText");
       if (successBox && successText) {
-        successText.innerHTML = `<strong>Request #${requestRecord.request_id}</strong> dispatched to <strong>${doctorName}</strong>. Awaiting clinical review.`;
+        successText.innerHTML = `<strong>Request #${escapeHtml(requestRecord.request_id)}</strong> dispatched to <strong>${escapeHtml(doctorName)}</strong>. Awaiting clinical review.`;
         successBox.classList.remove("hidden");
         setTimeout(() => successBox.classList.add("hidden"), 8000);
       }
@@ -1082,21 +1092,29 @@
         }
 
         const dateStr = r.created_at ? r.created_at.substring(0, 16).replace("T", " ") : "Just now";
+        const safeReqId = escapeHtml(r.request_id);
+        const reqIdAttr = encodeURIComponent(r.request_id || "");
+        const safeDsName = escapeHtml(r.dataset_name);
+        const safeDocName = escapeHtml(r.assigned_doctor_name || "Any Doctor");
+        const safeSubBy = escapeHtml(r.submitted_by || "Safety Team");
+        const safeNotes = escapeHtml(r.doctor_notes || "");
+        const safeRecDoc = escapeHtml(r.doctor_name || "Medical Verifier");
+        const safeRecLic = escapeHtml(r.doctor_license || "Licensed MD");
 
         html += `
           <div class="border border-slate-200 rounded-lg p-3 bg-white hover:bg-slate-50 transition space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
-                <span class="font-mono font-bold text-slate-900">${r.request_id}</span>
+                <span class="font-mono font-bold text-slate-900">${safeReqId}</span>
                 <span class="text-slate-400">&bull;</span>
-                <span class="font-semibold text-slate-800">${r.dataset_name}</span>
+                <span class="font-semibold text-slate-800">${safeDsName}</span>
               </div>
               ${statusBadge}
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-600 bg-slate-50 p-2 rounded">
-              <div><span class="text-slate-400 block">Assigned Doctor:</span> <strong class="text-slate-800">${r.assigned_doctor_name || "Any Doctor"}</strong></div>
-              <div><span class="text-slate-400 block">Submitted By:</span> <span>${r.submitted_by || "Safety Team"}</span></div>
+              <div><span class="text-slate-400 block">Assigned Doctor:</span> <strong class="text-slate-800">${safeDocName}</strong></div>
+              <div><span class="text-slate-400 block">Submitted By:</span> <span>${safeSubBy}</span></div>
               <div><span class="text-slate-400 block">Cases / Alerts:</span> <strong>${(r.total_cases||0).toLocaleString()}</strong> / <span class="text-rose-600 font-semibold">${(r.expedited_alerts||0).toLocaleString()} alerts</span></div>
               <div><span class="text-slate-400 block">Submitted:</span> <span>${dateStr} UTC</span></div>
             </div>
@@ -1104,13 +1122,13 @@
             ${r.doctor_notes ? `
               <div class="p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-0.5">
                 <span class="font-bold flex items-center"><i class="fa-solid fa-notes-medical mr-1.5 text-amber-700"></i> Doctor Feedback & Instructions:</span>
-                <p class="text-amber-800 italic">"${r.doctor_notes}"</p>
-                <p class="text-[10px] text-amber-700 mt-0.5">&bull; Recorded by ${r.doctor_name || "Medical Verifier"} (${r.doctor_license || "Licensed MD"})</p>
+                <p class="text-amber-800 italic">"${safeNotes}"</p>
+                <p class="text-[10px] text-amber-700 mt-0.5">&bull; Recorded by ${safeRecDoc} (${safeRecLic})</p>
               </div>
             ` : ""}
 
             <div class="flex justify-end space-x-2 pt-1">
-              <button onclick="loadQueueRequest('${r.request_id}')" class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded font-semibold text-xs flex items-center transition">
+              <button onclick="loadQueueRequest(decodeURIComponent('${reqIdAttr}'))" class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded font-semibold text-xs flex items-center transition">
                 <i class="fa-solid fa-microscope mr-1"></i> Observe & Verify
               </button>
             </div>
@@ -1847,7 +1865,7 @@
         dsBadgeContainer.innerHTML = `
           <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${isCustom ? 'bg-emerald-50 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700 border border-slate-300'}">
             <i class="fa-solid ${isCustom ? 'fa-file-csv text-emerald-600' : 'fa-database text-slate-500'} mr-1.5"></i>
-            Analyzed Dataset: <span class="font-bold ml-1">${dsName}</span> &nbsp;(${isCustom ? 'User-Uploaded ICSR Dataset' : 'FDA Benchmark Reference'})
+            Analyzed Dataset: <span class="font-bold ml-1">${escapeHtml(dsName)}</span> &nbsp;(${isCustom ? 'User-Uploaded ICSR Dataset' : 'FDA Benchmark Reference'})
           </div>
         `;
       }

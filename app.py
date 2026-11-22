@@ -257,13 +257,24 @@ def health_check():
 # ===========================================================================
 
 @app.post("/api/auth/register", tags=["Authentication"])
-def register(req: RegisterRequest):
+def register(req: RegisterRequest, authorization: Optional[str] = Header(None)):
     """Registers a new user (Doctor/Verifier or Safety Analyst) with credentials and role."""
     role = req.role.strip().lower()
     if role not in ("doctor", "verifier", "analyst", "user"):
-        raise HTTPException(status_code=400, detail="Invalid role. Must be 'doctor' or 'analyst'.")
-    if role in ("doctor", "verifier") and not req.medical_license:
-        req.medical_license = f"MED-REG-{secrets.token_hex(3).upper()}"
+        raise HTTPException(status_code=400, detail="Invalid role. Must be 'doctor', 'analyst', or 'user'.")
+    if role in ("doctor", "verifier"):
+        is_authorized = False
+        if authorization and authorization.lower().startswith("bearer "):
+            calling_user = get_user_from_token(authorization[7:].strip())
+            if calling_user and calling_user.get("role") in ("doctor", "verifier"):
+                is_authorized = True
+        if not is_authorized:
+            raise HTTPException(
+                status_code=403,
+                detail="Public self-registration is limited to analyst or user accounts. Doctor accounts must be provisioned by an authenticated medical professional."
+            )
+        if not req.medical_license:
+            req.medical_license = f"MED-REG-{secrets.token_hex(3).upper()}"
     try:
         user = register_user(
             username=req.username,
@@ -485,6 +496,14 @@ def generate_report(req: GenerateRequest):
                 base_url = "https://api.anthropic.com/v1"
             else:
                 base_url = "https://api.openai.com/v1"
+        else:
+            import urllib.parse
+            parsed = urllib.parse.urlparse(base_url)
+            hostname = (parsed.hostname or "").lower()
+            if parsed.scheme not in ("http", "https"):
+                raise HTTPException(status_code=400, detail="Invalid base_url scheme. Only http/https supported.")
+            if hostname in ("169.254.169.254", "metadata.google.internal", "100.100.100.200"):
+                raise HTTPException(status_code=400, detail="Access to cloud metadata endpoints is prohibited.")
 
         client = OpenAICompatibleLLMClient(
             api_key=req.api_key,
@@ -776,10 +795,16 @@ def get_verification_requests(
 ):
     """Retrieves verification requests submitted to registered doctors."""
     requests = list_verification_requests(doctor_id=doctor_id, status=status)
+    sanitized = []
+    for r in requests:
+        r_copy = dict(r)
+        if "stored_path" in r_copy and r_copy["stored_path"]:
+            r_copy["stored_path"] = Path(r_copy["stored_path"]).name
+        sanitized.append(r_copy)
     return {
         "status": "success",
-        "count": len(requests),
-        "requests": requests
+        "count": len(sanitized),
+        "requests": sanitized
     }
 
 
@@ -822,7 +847,10 @@ def get_single_verification_request(request_id: str):
     req = get_verification_request(request_id)
     if not req:
         raise HTTPException(status_code=404, detail=f"Verification request '{request_id}' not found.")
-    return {"status": "success", "request": req}
+    req_copy = dict(req)
+    if "stored_path" in req_copy and req_copy["stored_path"]:
+        req_copy["stored_path"] = Path(req_copy["stored_path"]).name
+    return {"status": "success", "request": req_copy}
 
 
 @app.post("/api/verification-requests/{request_id}/respond", tags=["Human Review"])
@@ -839,6 +867,12 @@ def respond_to_verification_request(
     existing = get_verification_request(request_id)
     if not existing:
         raise HTTPException(status_code=404, detail=f"Verification request '{request_id}' not found.")
+
+    if existing.get("assigned_doctor_id") and existing["assigned_doctor_id"] != doctor_user["id"]:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Access denied: This verification request is assigned to a different physician (ID: {existing['assigned_doctor_id']})."
+        )
 
     updated = update_verification_request_decision(
         request_id=request_id,
